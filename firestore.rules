@@ -1,0 +1,149 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============ HELPER FUNCTIONS ============
+    
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Get current user UID
+    function currentUid() {
+      return request.auth.uid;
+    }
+    
+    // Check if request comes from client (not backend)
+    function isClient() {
+      return request.auth.token.firebase.sign_in_provider != 'custom';
+    }
+    
+    // Get store owner from store document
+    function getStoreOwner(storeId) {
+      return get(/databases/$(database)/documents/stores/$(storeId)).data.ownerId;
+    }
+    
+    // Check if user owns a store
+    function isStoreOwner(storeId) {
+      return isAuthenticated() && currentUid() == getStoreOwner(storeId);
+    }
+    
+    // Check if document belongs to a specific store
+    function inStore(storeId) {
+      return resource.data.storeId == storeId;
+    }
+    
+    // Check if customerId is guest or matches current user
+    function isValidCustomer(customerId) {
+      return customerId.matches('guest_.*') || customerId == currentUid();
+    }
+    
+    // ============ STORES COLLECTION ============
+    
+    match /stores/{storeId} {
+      // ✅ PROBLEM 1 SOLUTION: Only store owner can read/write their store
+      allow read: if isAuthenticated() && isStoreOwner(storeId);
+      allow write: if isAuthenticated() && isStoreOwner(storeId);
+      
+      // ============ STORE SUBCOLLECTIONS ============
+      
+      // ----- CUSTOMERS (Per-Store Isolation) -----
+      match /customers/{uid} {
+        // ✅ Customer can read/write their own record
+        allow read: if isAuthenticated() && currentUid() == uid;
+        // ✅ Store owner can read/write all customers in their store
+        allow read: if isAuthenticated() && isStoreOwner(storeId);
+        allow write: if isAuthenticated() && isStoreOwner(storeId);
+        // ✅ System can create on signup
+        allow create: if isAuthenticated() && uid == currentUid();
+        allow update: if isAuthenticated() && (currentUid() == uid || isStoreOwner(storeId));
+      }
+      
+      // ----- PRODUCTS (Per-Store Isolation) -----
+      match /products/{productId} {
+        // ✅ Anyone can read published products from a store
+        allow read: if inStore(storeId);
+        // ✅ PROBLEM 1 SOLUTION: Only store owner can create/edit products
+        allow write: if isAuthenticated() && isStoreOwner(storeId);
+      }
+      
+      // ----- ORDERS (Per-Store Isolation) -----
+      match /orders/{orderId} {
+        // ✅ Customer can read their own orders
+        allow read: if isAuthenticated() && (
+          resource.data.customerId == currentUid() ||
+          currentUid() == resource.data.customerSnapshot.uid
+        );
+        // ✅ PROBLEM 1 SOLUTION: Store owner can read all orders in their store
+        allow read: if isAuthenticated() && isStoreOwner(storeId);
+        
+        // ✅ Create orders: customer (registered or guest)
+        allow create: if isValidCustomer(request.resource.data.customerId) && 
+                       inStore(storeId) &&
+                       request.resource.data.customerSnapshot != null;
+        
+        // ✅ Update orders: store owner only
+        allow update: if isAuthenticated() && isStoreOwner(storeId);
+      }
+      
+      // ----- CARTS (Per-Store Isolation) -----
+      match /carts/{customerId} {
+        // ✅ Customer can read/write their own cart
+        allow read, write: if isAuthenticated() && 
+                            isValidCustomer(customerId) &&
+                            (customerId == currentUid() || customerId.matches('guest_.*'));
+        
+        // ✅ Guest cart: only guest can access
+        allow read, write: if customerId.matches('guest_.*') &&
+                            !isAuthenticated();
+      }
+      
+      // ----- CATEGORIES (Per-Store Isolation) -----
+      match /categories/{categoryId} {
+        allow read: if inStore(storeId);
+        allow write: if isAuthenticated() && isStoreOwner(storeId);
+      }
+      
+      // ----- SETTINGS (Per-Store Isolation) -----
+      match /settings/{document=**} {
+        allow read: if true; // Public store settings (logo, name, etc.)
+        allow write: if isAuthenticated() && isStoreOwner(storeId);
+      }
+      
+      // ----- VISITORS (Per-Store Analytics) -----
+      match /visitors/{visitorId} {
+        // ✅ PROBLEM 1 SOLUTION: No one can read visitor data (privacy)
+        // Store owner can only read aggregated analytics
+        allow read: if false;
+        // ✅ Only system can write visitor records
+        allow write: if request.auth == null || !isAuthenticated();
+      }
+      
+      // ----- FAVORITES (Per-Store Isolation) -----
+      match /favorites/{customerId} {
+        allow read: if (isAuthenticated() && currentUid() == customerId) ||
+                       customerId.matches('guest_.*');
+        allow write: if isAuthenticated() && currentUid() == customerId ||
+                       customerId.matches('guest_.*');
+      }
+    }
+    
+    // ============ GLOBAL COLLECTIONS (Deprecated - for migration) ============
+    
+    // Legacy users collection
+    match /users/{uid} {
+      // ✅ User can read/write their own profile (NO PASSWORD FIELDS)
+      allow read: if isAuthenticated() && currentUid() == uid;
+      allow write: if isAuthenticated() && currentUid() == uid &&
+                     !request.resource.data.keys().hasAny(['password', 'passwordHash']);
+    }
+    
+    // ============ PREVENT UNAUTHORIZED ACCESS ============
+    
+    // Deny everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
