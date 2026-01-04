@@ -10,8 +10,9 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
-import { storeService, Store } from "@/lib/firestore";
+import { useAuth } from "@/lib/contexts/AuthContext";
+import { storeService } from "@/lib/src/services/store";
+import { Store } from "@/lib/src/types";
 import { signOutUser } from "@/lib/auth";
 import {
   Shield,
@@ -220,7 +221,7 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       // Load all stores
-      const storesData = await storeService.getAll(1, 100);
+      const storesData = await storeService.getAll();
 
       // تنظيف البيانات والتأكد من وجود الهيكل المطلوب مع التوافق مع النوع
       const cleanedStores: SafeStore[] = storesData.map((store) => {

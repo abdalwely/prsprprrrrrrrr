@@ -41,7 +41,7 @@ import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { submitStoreApplication } from "@/lib/store-approval-system";
-import { checkSubdomainAvailability } from "@/lib/firestore";
+import { checkSubdomainAvailability } from "@/lib/src";
 import {
   businessTypesWithSub,
   primaryBusinessTypes,

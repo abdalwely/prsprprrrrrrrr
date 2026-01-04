@@ -15,8 +15,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, User, ShoppingBag, MapPin, Lock } from "lucide-react";
 import { getCurrentCustomer } from "@/lib/customer-auth";
-import { customerService } from "@/lib/firestore";
-import { getCurrentStoreId } from "@/lib/firebase";
+import { customerService } from "@/lib/src";
+import { getCurrentStoreId } from "@/lib/src/firebase/firebase";
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();

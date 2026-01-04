@@ -20,14 +20,14 @@ import {
   Package,
   CheckCircle,
 } from "lucide-react";
-import { storeService } from "@/lib/store-service";
-import { cartService, orderService, productService } from "@/lib/firestore";
+import { storeService } from "@/lib/src";
+import { cartService, orderService, productService } from "@/lib/src";
 import {
   getOrCreateCustomerIdForStore,
   linkVisitorToCustomer,
-} from "@/lib/firestore";
+} from "@/lib/src";
 import { getCurrentCustomer } from "@/lib/customer-auth";
-import { Order, ShippingAddress } from "@/lib/types";
+import { Order, ShippingAddress } from "@/lib/src";
 
 interface CartItemWithProduct {
   productId: string;

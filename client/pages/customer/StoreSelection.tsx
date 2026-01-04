@@ -11,9 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/lib/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { storeService, productService } from "@/lib/firestore";
+import { storeService, productService } from "@/lib/src";
 import {
   Store as StoreIcon,
   Search,

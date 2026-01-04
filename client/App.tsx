@@ -6,8 +6,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { StoreProvider } from "@/contexts/StoreContext";
+import { AuthProvider } from "@/lib/contexts/AuthContext";
+import { StoreProvider } from "@/lib/contexts/StoreContext";
+import React, { useEffect, useState } from "react";
 
 // Initialize platform with admin user
 import { initializeApp } from "./lib/app-initialization";
@@ -22,24 +23,14 @@ import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 // Dashboard Pages
-import MerchantDashboard from "./pages/merchant/Dashboard";
-import EnhancedMerchantDashboard from "./pages/merchant/EnhancedDashboard";
-import ComprehensiveDashboard from "./pages/merchant/ComprehensiveDashboard";
-import StoreCustomization from "./pages/merchant/StoreCustomization";
 import StoreSelection from "./pages/customer/StoreSelection";
-import CustomerStoreDashboard from "./pages/customer/CustomerStoreDashboard";
 import StoreBuilder from "./pages/merchant/StoreBuilder";
-import EnhancedStoreBuilder from "./pages/merchant/EnhancedStoreBuilder";
-import ProductManagement from "./pages/merchant/ProductManagement";
 import AddProduct from "./pages/merchant/AddProduct";
-import OrderManagement from "./pages/merchant/OrderManagement";
 import StoreSettings from "./pages/merchant/StoreSettings";
-import PendingApproval from "./pages/merchant/PendingApproval";
 import AdvancedStoreCustomization from "./pages/merchant/AdvancedStoreCustomization";
 
 import CustomerDashboard from "./pages/customer/Dashboard";
 import AdminDashboard from "./pages/admin/Dashboard";
-import EnhancedAdminDashboard from "./pages/admin/EnhancedDashboard";
 import AdminStoreApprovals from "@/pages/admin/AdminStoreApprovals";
 
 // الصفحات الجديدة للمدير
@@ -49,18 +40,14 @@ import PlatformSettings from "@/pages/admin/PlatformSettings";
 
 // Store Frontend
 import WorkingStorefront from "./pages/store/WorkingStorefront";
-import AdvancedStorefront from "./pages/store/AdvancedStorefront";
 
 // Placeholder pages
 import PlaceholderPage from "./pages/PlaceholderPage";
 import DiagnosticsPage from "./pages/DiagnosticsPage";
 
-// Connection status for debugging
-// import ConnectionStatus from "./components/ConnectionStatus";
 import CheckoutPage from "./pages/store/CheckoutPage";
 import OrderConfirmation from "./pages/customer/OrderConfirmation";
 import EmailVerification from "./pages/EmailVerification";
-import CompleteProfile from "./pages/CompleteProfile";
 import CreateStore from "./pages/CreateStore";
 import ApplicationStatus from "./pages/ApplicationStatus";
 import WaitingEmailVerification from "./pages/WaitingEmailVerification";
@@ -68,28 +55,49 @@ import MerchantComprehensiveDashboard from "./pages/merchant/merchant-dashboard/
 import Profile from "./pages/customer/Profile";
 import CustomerAuth from "./pages/customer/CustomerAuth";
 
-// Initialize the platform on app start
-initializeApp();
-
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
+const AppContent = () => {
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        await initializeApp();
+        setInitialized(true);
+      } catch (error) {
+        console.error("Failed to initialize app:", error);
+        setInitialized(true); // نستمر حتى لو فشل التهيئة
+      }
+    };
+    init();
+  }, []);
+
+  if (!initialized) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">جاري تهيئة التطبيق...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
     <BrowserRouter>
       <AuthProvider>
         <StoreProvider>
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            {/* <ConnectionStatus /> */}
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<SignUp />} />
               <Route path="/customer/auth" element={<CustomerAuth />} />
-              // أضف هذه المسارات في ملف التوجيه
-              {/* <Route path="/merchant-signup" element={<SignUp />} /> */}
+              <Route path="/merchant-signup" element={<SignUp />} />
               <Route
                 path="/waiting-email-verification"
                 element={<WaitingEmailVerification />}
@@ -98,8 +106,8 @@ const App = () => (
                 path="/email-verification"
                 element={<EmailVerification />}
               />
-              <Route path="/complete-profile" element={<CompleteProfile />} />
-              {/* Admin Dashboard Routes - الأول */}
+
+              {/* Admin Dashboard Routes */}
               <Route
                 path="/admin/dashboard"
                 element={
@@ -116,7 +124,6 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
-              {/* الصفحات الجديدة للمدير - استبدال الصفحات المؤقتة */}
               <Route
                 path="/admin/stores"
                 element={
@@ -141,7 +148,8 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
-              {/* بقية صفحات المدير (تبقى مؤقتة حالياً) */}
+
+              {/* بقية صفحات المدير */}
               <Route
                 path="/admin/customers"
                 element={
@@ -182,7 +190,8 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
-              {/* Merchant Dashboard Routes - الثاني */}
+
+              {/* Merchant Dashboard Routes */}
               <Route
                 path="/merchant/dashboard"
                 element={
@@ -196,22 +205,6 @@ const App = () => (
                 element={
                   <ProtectedRoute allowedRoles={["merchant"]}>
                     <CreateStore />
-                  </ProtectedRoute>
-                }
-              />
-              {/* <Route
-                path="/merchant/create-store"
-                element={
-                  <ProtectedRoute allowedRoles={["merchant"]}>
-                    <CreateStore />
-                  </ProtectedRoute>
-                }
-              /> */}
-              <Route
-                path="/merchant/pending"
-                element={
-                  <ProtectedRoute allowedRoles={["merchant"]}>
-                    <PendingApproval />
                   </ProtectedRoute>
                 }
               />
@@ -240,26 +233,10 @@ const App = () => (
                 }
               />
               <Route
-                path="/merchant/products"
-                element={
-                  <ProtectedRoute allowedRoles={["merchant"]}>
-                    <ProductManagement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
                 path="/merchant/products/new"
                 element={
                   <ProtectedRoute allowedRoles={["merchant"]}>
                     <AddProduct />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/merchant/orders"
-                element={
-                  <ProtectedRoute allowedRoles={["merchant"]}>
-                    <OrderManagement />
                   </ProtectedRoute>
                 }
               />
@@ -303,7 +280,8 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
-              {/* Customer Dashboard Routes - الثالث */}
+
+              {/* Customer Dashboard Routes */}
               <Route
                 path="/customer/dashboard"
                 element={
@@ -323,14 +301,6 @@ const App = () => (
                 }
               />
               <Route
-                path="/customer/store-dashboard"
-                element={
-                  <ProtectedRoute allowedRoles={["customer"]}>
-                    <CustomerStoreDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
                 path="/customer/orders"
                 element={
                   <ProtectedRoute allowedRoles={["customer"]}>
@@ -338,7 +308,6 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
-              // في قسم Customer Dashboard Routes - الثالث
               <Route
                 path="/store/:subdomain/checkout"
                 element={
@@ -347,7 +316,6 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
-              // في قسم Customer Routes أضف:
               <Route
                 path="/store/:subdomain/order-confirmation"
                 element={
@@ -380,20 +348,14 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/customer/loyalty"
-                element={
-                  <ProtectedRoute allowedRoles={["merchant"]}>
-                    <PlaceholderPage type="customer-loyalty" />
-                  </ProtectedRoute>
-                }
-              />
-              {/* Store Pages (Public store fronts) - الرابع */}
+
+              {/* Store Pages (Public store fronts) */}
               <Route path="/store/:subdomain" element={<WorkingStorefront />} />
               <Route
                 path="/store-basic/:subdomain"
                 element={<WorkingStorefront />}
               />
+
               {/* Static Pages */}
               <Route
                 path="/features"
@@ -419,6 +381,7 @@ const App = () => (
                 path="/careers"
                 element={<PlaceholderPage type="careers" />}
               />
+
               {/* Auth Recovery */}
               <Route
                 path="/forgot-password"
@@ -428,6 +391,7 @@ const App = () => (
                 path="/reset-password"
                 element={<PlaceholderPage type="reset-password" />}
               />
+
               {/* Marketplace Pages */}
               <Route
                 path="/marketplace"
@@ -445,8 +409,10 @@ const App = () => (
                 path="/marketplace/deals"
                 element={<PlaceholderPage type="marketplace-deals" />}
               />
+
               {/* Diagnostics Page */}
               <Route path="/diagnostics" element={<DiagnosticsPage />} />
+
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
@@ -454,6 +420,12 @@ const App = () => (
         </StoreProvider>
       </AuthProvider>
     </BrowserRouter>
+  );
+};
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <AppContent />
   </QueryClientProvider>
 );
 

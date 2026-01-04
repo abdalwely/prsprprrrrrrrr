@@ -1,4 +1,4 @@
-// pages/SignUp.tsx - كامل ومحدث
+// pages/SignUp.tsx - كامل ومحدث مع التوافق مع الخدمات
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -21,10 +21,8 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import {
-  createAccountEnhanced,
-  sendEmailVerification,
-} from "@/lib/auth-enhanced";
+import { authService } from "@/lib/src/services/auth/auth.service";
+import { userService } from "@/lib/src/services/user/user.service";
 import {
   Store,
   Mail,
@@ -61,6 +59,19 @@ interface FormData {
   businessType: string;
   city: string;
   storeDescription: string;
+}
+
+// واجهة بيانات المستخدم للتاجر
+interface MerchantUserData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  userType: "merchant" | "admin" | "customer";
+  city: string;
+  businessName: string;
+  businessType: string;
+  storeDescription?: string;
 }
 
 // المدن
@@ -116,7 +127,7 @@ export default function SignUp() {
     storeDescription: "",
   });
 
-  const businessTypes = businessTypesWithSub; // ✅ الأنشطة الكاملة
+  const businessTypes = businessTypesWithSub;
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -439,8 +450,6 @@ export default function SignUp() {
       return;
     }
 
-    // في الواقع، هنا ستتحقق من الرمز مع الخادم
-    // لكننا سنفترض أن الرمز صحيح لأغراض التطوير
     setIsCodeVerified(true);
     toast({
       title: currentText.verifySuccess,
@@ -463,7 +472,7 @@ export default function SignUp() {
     }
 
     simulateSendingCode();
-    setTimer(60); // إعادة تعيين المؤقت
+    setTimer(60);
   };
 
   const handleSkipVerification = () => {
@@ -474,65 +483,67 @@ export default function SignUp() {
     setCurrentStep(3);
   };
 
-  // في دالة handleSubmit في SignUp.tsx - تعديل الجزء الخاص بالانتقال
-  // في SignUp.tsx - في دالة handleSubmit
-  // في SignUp.tsx - تعديل handleSubmit
   const handleSubmit = async () => {
     setLoading(true);
 
     try {
-      // تحضير بيانات المستخدم
-      const userData = {
+      // فصل الاسم الأول والاسم الأخير
+      const nameParts = formData.merchantName.trim().split(" ");
+      const firstName = nameParts[0] || formData.merchantName;
+      const lastName = nameParts.slice(1).join(" ") || firstName;
+
+      // تحضير بيانات المستخدم للتاجر
+      const merchantUserData: MerchantUserData = {
+        firstName,
+        lastName,
         email: formData.email,
-        firstName: formData.merchantName.split(" ")[0],
-        lastName:
-          formData.merchantName.split(" ").slice(1).join(" ") ||
-          formData.merchantName,
         phone: formData.phone,
-        userType: "merchant" as const,
+        userType: "merchant",
         city: formData.city,
         businessName: formData.businessName,
         businessType: formData.businessType,
+        storeDescription: formData.storeDescription,
       };
 
-      // إنشاء الحساب في Firebase
-      const result = await createAccountEnhanced(
+      // استخدام authService لإنشاء الحساب
+      const result = await authService.createAccount(
         formData.email,
         formData.password,
-        userData,
+        merchantUserData,
       );
 
       if (result.success && result.user) {
         const user = result.user.user;
+        const userData = result.userData;
 
         // حفظ بيانات التاجر في localStorage
         const merchantData = {
           uid: user.uid,
-          email: userData.email,
+          email: userData?.email || formData.email,
           merchantName: formData.merchantName,
           businessName: formData.businessName,
           businessType: formData.businessType,
           city: formData.city,
           storeDescription: formData.storeDescription,
           userType: "merchant",
-          phone: userData.phone,
-          isEmailVerified: false,
+          phone: merchantUserData.phone,
+          isEmailVerified: user.emailVerified || false,
           createdAt: new Date().toISOString(),
+          firstName: merchantUserData.firstName,
+          lastName: merchantUserData.lastName,
         };
 
         localStorage.setItem("currentMerchant", JSON.stringify(merchantData));
         localStorage.setItem("userUid", user.uid);
-        localStorage.setItem("userEmail", userData.email);
+        localStorage.setItem("userEmail", formData.email);
         localStorage.setItem("userPhone", formData.phone);
         localStorage.setItem("isNewMerchant", "true");
-        localStorage.setItem("pendingEmailVerification", "true"); // ⭐️ إضافة علامة
 
-        // ⭐️ إرسال رابط التحقق بالبريد الإلكتروني
+        // إرسال رابط التحقق بالبريد الإلكتروني
         try {
-          await sendEmailVerification(user, {
-            url: `${window.location.origin}/email-verified-redirect`, // ⭐️ صفحة وسيطة
-            handleCodeInApp: true,
-          });
+          await authService.sendEmailVerification(user);
+
+          localStorage.setItem("pendingEmailVerification", "true");
 
           toast({
             title: "📧 رابط التحقق أرسل",
@@ -540,7 +551,7 @@ export default function SignUp() {
           });
         } catch (error) {
           console.warn("⚠️ لم يتم إرسال رابط التحقق:", error);
-          // لا توقف العملية
+          // لا توقف العملية، يمكن التحقق لاحقاً
         }
 
         toast({
@@ -549,7 +560,7 @@ export default function SignUp() {
           duration: 3000,
         });
 
-        // ⭐️ الانتقال إلى صفحة انتظار التحقق
+        // الانتقال إلى صفحة انتظار التحقق
         setTimeout(() => {
           navigate("/waiting-email-verification", {
             state: {
@@ -568,12 +579,21 @@ export default function SignUp() {
 
       let errorMessage = error.message || "حدث خطأ غير متوقع";
 
-      if (errorMessage.includes("email-already-in-use")) {
+      // معالجة أخطاء Firebase الشائعة
+      if (
+        errorMessage.includes("email-already-in-use") ||
+        errorMessage.includes("البريد الإلكتروني مسجل مسبقاً")
+      ) {
         errorMessage = "البريد الإلكتروني مستخدم بالفعل";
-      } else if (errorMessage.includes("weak-password")) {
+      } else if (
+        errorMessage.includes("weak-password") ||
+        errorMessage.includes("كلمة المرور ضعيفة")
+      ) {
         errorMessage = "كلمة المرور ضعيفة. يجب أن تكون 6 أحرف على الأقل";
       } else if (errorMessage.includes("invalid-email")) {
         errorMessage = "البريد الإلكتروني غير صالح";
+      } else if (errorMessage.includes("network-request-failed")) {
+        errorMessage = "فشل في الاتصال بالشبكة. تحقق من اتصالك بالإنترنت";
       }
 
       toast({
@@ -808,7 +828,6 @@ export default function SignUp() {
             variant="outline"
             className="w-full"
             onClick={() => {
-              // تخطي التحقق الآن (يمكن التحقق لاحقاً)
               toast({
                 title: "يمكنك التحقق لاحقاً",
                 description:
@@ -871,7 +890,7 @@ export default function SignUp() {
               <SelectContent>
                 {businessTypes.map((type) => (
                   <SelectItem key={type.value} value={type.value}>
-                    {type.label[language]} {/* ✅ اسم النشاط باللغة المختارة */}
+                    {type.label[language]}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -1028,7 +1047,7 @@ export default function SignUp() {
                   <Button
                     type="submit"
                     className="bg-blue-600 hover:bg-blue-700"
-                    disabled={loading || (currentStep === 2 && !isCodeVerified)}
+                    disabled={loading}
                   >
                     {currentStep === 3 ? (
                       loading ? (

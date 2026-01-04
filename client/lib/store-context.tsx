@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Store } from './firestore';
+import React, { createContext, useContext, useState, ReactNode } from "react";
+import { Store } from "./src";
 
 interface StoreContextType {
   store: Store | null;
@@ -8,7 +8,9 @@ interface StoreContextType {
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
-export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const StoreProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [store, setStore] = useState<Store | null>(null);
 
   return (
@@ -21,7 +23,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 export const useStore = () => {
   const context = useContext(StoreContext);
   if (context === undefined) {
-    throw new Error('useStore must be used within a StoreProvider');
+    throw new Error("useStore must be used within a StoreProvider");
   }
   return context;
 };

@@ -1,8 +1,3 @@
-// 📂 client/lib/migration/data-migrator.ts
-/**
- * أداة ترحيل البيانات القديمة إلى النظام الموحد
- */
-
 import {
   collection,
   doc,
@@ -13,7 +8,7 @@ import {
   orderBy,
   Timestamp,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db } from "@//lib/src/firebase/firebase";
 
 // ============================================
 // 🛠️ الإعدادات

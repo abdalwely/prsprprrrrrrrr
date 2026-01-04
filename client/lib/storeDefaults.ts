@@ -1,6 +1,6 @@
 // store/client/lib/storeDefaults.ts
 
-import { StoreCustomization } from "./types/store";
+import { StoreCustomization } from "./src/types";
 
 export const defaultStoreCustomization: StoreCustomization = {
   // الخصائص الأساسية

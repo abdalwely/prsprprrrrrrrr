@@ -7,60 +7,20 @@ import {
   updateProfile,
   User,
 } from "firebase/auth";
-import { ensureStoreCustomer, linkVisitorToCustomer } from "./multi-tenant";
+import { ensureStoreCustomer, linkVisitorToCustomer } from "./src";
+import { db } from "./firebase";
+import { setDoc, doc } from "firebase/firestore";
 
-/**
- * ✅ PROBLEM 2 SOLUTION: Get current store context from URL or state
- * Returns storeId if user is in a store-specific context
- */
-function getCurrentStoreContext(): string | null {
-  try {
-    // Try from URL path
-    const path = window.location.pathname;
-    const match = path.match(/\/store\/([^\/]+)/);
-    if (match) return match[1];
-
-    // Try from localStorage
-    const pendingStore = localStorage.getItem("pendingStoreInfo");
-    if (pendingStore) {
-      const storeData = JSON.parse(pendingStore);
-      return storeData.storeId || storeData.id || null;
-    }
-
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * ✅ PROBLEM 2 SOLUTION: Redirect after authentication
- * Keeps user in the same store they logged in from
- */
-function redirectAfterAuth(storeId: string | null): void {
-  if (storeId) {
-    // Store-specific redirect
-    localStorage.removeItem("pendingStoreInfo");
-    window.location.href = `/store/${storeId}`;
-  } else {
-    // Generic redirect (shouldn't happen for proper store context)
-    window.location.href = "/";
-  }
-}
-
-/**
- * ✅ Customer login with Firebase Auth
- * Supports optional storeId for store-aware redirect
- */
+// تسجيل الدخول
 export const loginCustomer = async (
   email: string,
   password: string,
   storeId?: string,
 ): Promise<any> => {
   try {
-    console.log("🔐 Logging in with Firebase Auth");
+    console.log("🔐 تسجيل دخول مع Firebase Auth");
 
-    // 1. Firebase Auth login
+    // 1. تسجيل الدخول مع Firebase Auth
     const userCredential = await signInWithEmailAndPassword(
       auth,
       email,
@@ -68,36 +28,26 @@ export const loginCustomer = async (
     );
     const user = userCredential.user;
 
-    console.log("✅ Firebase login successful:", user.uid);
+    console.log("✅ تسجيل دخول Firebase ناجح:", user.uid);
 
-    // 2. Get store context (explicit param or from URL)
-    const targetStoreId = storeId || getCurrentStoreContext();
-
-    // 3. If in a store context, ensure customer record exists
-    if (targetStoreId) {
+    // 2. إذا كان هناك storeId، ربط العميل بالمتجر
+    if (storeId) {
       try {
-        await ensureStoreCustomer(targetStoreId, user.uid);
-        console.log("✅ Customer linked to store");
+        await ensureStoreCustomer(storeId, user.uid);
+        console.log("✅ تم ربط العميل بالمتجر");
 
-        // 4. Migrate guest data if exists
-        const visitorKey = `visitor_${targetStoreId}`;
+        // 3. التحقق من وجود ضيف سابق وربطه
+        const visitorKey = `visitor_${storeId}`;
         const oldVisitorId = localStorage.getItem(visitorKey);
 
         if (oldVisitorId) {
-          await linkVisitorToCustomer(
-            targetStoreId,
-            oldVisitorId,
-            user.uid,
-          );
-          console.log("✅ Guest data migrated");
+          await linkVisitorToCustomer(storeId, oldVisitorId, user.uid);
+          console.log("✅ تم ربط الضيف السابق");
         }
       } catch (linkError) {
-        console.warn("⚠️ Could not link customer:", linkError);
+        console.warn("⚠️ لم يتم الربط التلقائي:", linkError);
       }
     }
-
-    // 5. ✅ PROBLEM 2 SOLUTION: Redirect to store after login
-    redirectAfterAuth(targetStoreId);
 
     return {
       success: true,
@@ -110,7 +60,7 @@ export const loginCustomer = async (
       timestamp: new Date().toISOString(),
     };
   } catch (error: any) {
-    console.error("❌ Login error:", error);
+    console.error("❌ خطأ في تسجيل الدخول:", error);
 
     let errorMessage = "البريد الإلكتروني أو كلمة المرور غير صحيحة";
     if (error.code === "auth/user-not-found") {
@@ -118,7 +68,7 @@ export const loginCustomer = async (
     } else if (error.code === "auth/wrong-password") {
       errorMessage = "كلمة المرور غير صحيحة";
     } else if (error.code === "auth/too-many-requests") {
-      errorMessage = "محاولات تسجيل دخول كثيرة. حاول لاحقاً";
+      errorMessage = "تم محاولة تسجيل الدخول مرات كثيرة. حاول مرة أخرى لاحقاً";
     } else if (error.code === "auth/user-disabled") {
       errorMessage = "هذا الحساب معطل";
     }
@@ -127,21 +77,19 @@ export const loginCustomer = async (
   }
 };
 
-/**
- * ✅ Register new customer with Firebase Auth
- * Supports optional storeId for store-aware redirect
- */
+// إنشاء حساب جديد
 export const registerCustomer = async (
   email: string,
   password: string,
   fullName: string,
   phone?: string,
+  country?: string,
   storeId?: string,
 ): Promise<any> => {
   try {
-    console.log("📝 Creating account with Firebase Auth");
+    console.log("📝 إنشاء حساب مع Firebase Auth");
 
-    // 1. Create Firebase Auth account
+    // 1. إنشاء حساب في Firebase Auth
     const userCredential = await createUserWithEmailAndPassword(
       auth,
       email,
@@ -149,43 +97,49 @@ export const registerCustomer = async (
     );
     const user = userCredential.user;
 
-    // 2. Update profile with display name
+    // 2. تحديث الاسم في Auth
     if (fullName.trim()) {
       await updateProfile(user, {
         displayName: fullName.trim(),
       });
     }
 
-    console.log("✅ Firebase account created:", user.uid);
+    // 3. حفظ بيانات إضافية في مجموعة users
+    const [firstName, ...lastNameParts] = fullName.split(" ");
+    const lastName = lastNameParts.join(" ") || "";
 
-    // 3. Get store context
-    const targetStoreId = storeId || getCurrentStoreContext();
+    await setDoc(doc(db, "users", user.uid), {
+      uid: user.uid,
+      email: user.email,
+      firstName: firstName || "",
+      lastName: lastName || "",
+      phone: phone || "",
+      country: country || "اليمن",
+      userType: "customer",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
 
-    // 4. If in a store context, link customer to store
-    if (targetStoreId) {
+    console.log("✅ حساب Firebase وبيانات المستخدم أنشئت:", user.uid);
+
+    // 4. إذا كان هناك storeId، ربط العميل بالمتجر
+    if (storeId) {
       try {
-        await ensureStoreCustomer(targetStoreId, user.uid);
-        console.log("✅ Customer linked to store");
+        await ensureStoreCustomer(storeId, user.uid);
+        console.log("✅ تم ربط الحساب الجديد بالمتجر");
 
-        // 5. Migrate guest data if exists
-        const visitorKey = `visitor_${targetStoreId}`;
+        // 5. التحقق من وجود ضيف سابق وربطه
+        const visitorKey = `visitor_${storeId}`;
         const oldVisitorId = localStorage.getItem(visitorKey);
 
         if (oldVisitorId) {
-          await linkVisitorToCustomer(
-            targetStoreId,
-            oldVisitorId,
-            user.uid,
-          );
-          console.log("✅ Guest data migrated");
+          await linkVisitorToCustomer(storeId, oldVisitorId, user.uid);
+          console.log("✅ تم ربط الضيف السابق بالحساب الجديد");
         }
       } catch (linkError) {
-        console.warn("⚠️ Could not link customer:", linkError);
+        console.warn("⚠️ لم يتم الربط التلقائي:", linkError);
       }
     }
-
-    // 6. ✅ PROBLEM 2 SOLUTION: Redirect to store after signup
-    redirectAfterAuth(targetStoreId);
 
     return {
       success: true,
@@ -196,33 +150,33 @@ export const registerCustomer = async (
       },
     };
   } catch (error: any) {
-    console.error("❌ Registration error:", error);
+    console.error("❌ خطأ في إنشاء الحساب:", error);
 
     let errorMessage = "حدث خطأ أثناء إنشاء الحساب";
     if (error.code === "auth/email-already-in-use") {
       errorMessage = "البريد الإلكتروني مستخدم بالفعل";
     } else if (error.code === "auth/weak-password") {
-      errorMessage = "كلمة المرور ضعيفة (6 أحرف على الأقل)";
+      errorMessage = "كلمة المرور ضعيفة جداً (يجب أن تكون 6 أحرف على الأقل)";
     } else if (error.code === "auth/invalid-email") {
       errorMessage = "البريد الإلكتروني غير صحيح";
+    } else if (error.code === "auth/operation-not-allowed") {
+      errorMessage = "عملية التسجيل غير مسموحة حالياً";
     }
 
     throw new Error(errorMessage);
   }
 };
 
-/**
- * Reset password
- */
+// إعادة تعيين كلمة المرور
 export const resetPassword = async (email: string): Promise<void> => {
   try {
     await sendPasswordResetEmail(auth, email);
   } catch (error: any) {
-    console.error("❌ Password reset error:", error);
+    console.error("❌ خطأ في إعادة تعيين كلمة المرور:", error);
 
     let errorMessage = "حدث خطأ أثناء إرسال رابط إعادة التعيين";
     if (error.code === "auth/user-not-found") {
-      errorMessage = "لا يوجد حساب بهذا البريد الإلكتروني";
+      errorMessage = "لا يوجد حساب مرتبط بهذا البريد الإلكتروني";
     } else if (error.code === "auth/invalid-email") {
       errorMessage = "البريد الإلكتروني غير صحيح";
     }
@@ -231,22 +185,18 @@ export const resetPassword = async (email: string): Promise<void> => {
   }
 };
 
-/**
- * Logout customer
- */
+// تسجيل الخروج
 export const logoutCustomer = async (): Promise<void> => {
   try {
     await signOut(auth);
-    console.log("✅ Logged out");
+    console.log("✅ تم تسجيل الخروج");
   } catch (error) {
-    console.error("❌ Logout error:", error);
+    console.error("❌ خطأ في تسجيل الخروج:", error);
     throw error;
   }
 };
 
-/**
- * Get current customer
- */
+// الحصول على المستخدم الحالي
 export function getCurrentCustomer(): {
   uid: string;
   email: string;
@@ -264,16 +214,12 @@ export function getCurrentCustomer(): {
     : null;
 }
 
-/**
- * Check if customer is logged in
- */
+// التحقق إذا كان المستخدم مسجلاً
 export function isCustomerLoggedIn(): boolean {
   return !!auth.currentUser;
 }
 
-/**
- * Update customer profile
- */
+// تحديث الملف الشخصي
 export const updateCustomerProfile = async (
   displayName?: string,
   photoURL?: string,
@@ -289,16 +235,75 @@ export const updateCustomerProfile = async (
       photoURL: photoURL || user.photoURL,
     });
 
-    console.log("✅ Profile updated");
+    console.log("✅ تم تحديث الملف الشخصي");
   } catch (error) {
-    console.error("❌ Profile update error:", error);
+    console.error("❌ خطأ في تحديث الملف الشخصي:", error);
     throw error;
   }
 };
 
-/**
- * Get ID token
- */
+// تحديث البريد الإلكتروني
+export const updateCustomerEmail = async (newEmail: string): Promise<void> => {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error("لم يتم تسجيل الدخول");
+    }
+
+    // ملاحظة: تحتاج إلى إعادة المصادقة لتغيير البريد الإلكتروني
+    // هذا مثال مبسط
+    console.log("📧 تحديث البريد الإلكتروني يتطلب إعادة مصادقة");
+    throw new Error("تغيير البريد الإلكتروني يتطلب عملية إعادة مصادقة");
+  } catch (error) {
+    console.error("❌ خطأ في تحديث البريد الإلكتروني:", error);
+    throw error;
+  }
+};
+
+// تحديث كلمة المرور
+export const updateCustomerPassword = async (
+  newPassword: string,
+): Promise<void> => {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error("لم يتم تسجيل الدخول");
+    }
+
+    // ملاحظة: في Firebase JS SDK، updatePassword يتطلب إعادة المصادقة الحديثة
+    console.log("🔑 تحديث كلمة المرور يتطلب إعادة مصادقة حديثة");
+    throw new Error("تغيير كلمة المرور يتطلب إعادة مصادقة حديثة");
+  } catch (error) {
+    console.error("❌ خطأ في تحديث كلمة المرور:", error);
+    throw error;
+  }
+};
+
+// حذف الحساب
+export const deleteCustomerAccount = async (): Promise<void> => {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error("لم يتم تسجيل الدخول");
+    }
+
+    // ملاحظة: حذف الحساب يتطلب إعادة المصادقة
+    console.log("🗑️ حذف الحساب يتطلب إعادة مصادقة");
+    throw new Error("حذف الحساب يتطلب إعادة مصادقة");
+  } catch (error) {
+    console.error("❌ خطأ في حذف الحساب:", error);
+    throw error;
+  }
+};
+
+// الاستماع لتغيرات حالة المصادقة
+export const onAuthStateChanged = (
+  callback: (user: User | null) => void,
+): (() => void) => {
+  return auth.onAuthStateChanged(callback);
+};
+
+// الحصول على token المصادقة
 export const getIdToken = async (): Promise<string | null> => {
   try {
     const user = auth.currentUser;
@@ -306,16 +311,40 @@ export const getIdToken = async (): Promise<string | null> => {
 
     return await user.getIdToken();
   } catch (error) {
-    console.error("❌ Token error:", error);
+    console.error("❌ خطأ في جلب token المصادقة:", error);
     return null;
   }
 };
 
-/**
- * Listen to auth state changes
- */
-export const onAuthStateChanged = (
-  callback: (user: User | null) => void,
-): (() => void) => {
-  return auth.onAuthStateChanged(callback);
+// التحقق من صلاحية token
+export const verifyIdToken = async (token: string): Promise<any> => {
+  try {
+    // في تطبيقات العميل، نستخدم Firebase Admin SDK في الخادم للتحقق
+    // هذه دالة توضيحية
+    console.log("🔍 التحقق من token يتطلب الخادم");
+    return null;
+  } catch (error) {
+    console.error("❌ خطأ في التحقق من token:", error);
+    throw error;
+  }
 };
+
+// دوال التوافق مع النظام القديم
+export function getCustomerProfile() {
+  return getCurrentCustomer();
+}
+
+export function setCustomerProfile(profile: any) {
+  console.warn("⚠️ setCustomerProfile لم تعد مستخدمة في النظام الجديد");
+  return null;
+}
+
+export function clearCustomerProfile() {
+  // في النظام الجديد، نستخدم signOut
+  return logoutCustomer();
+}
+
+export function hashPassword(password: string): string {
+  console.warn("⚠️ hashPassword لم تعد مستخدمة في النظام الجديد");
+  return password;
+}

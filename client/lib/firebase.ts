@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
+import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBB2N2zAuf4kDf3j5x263tI9mwVXiVf92A",
@@ -21,17 +22,23 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+// تعطيل Analytics في التطوير لمنع الأخطاء
+export const analytics = null;
 
-// Development logging
+// ✅ Firebase مفعل في التطوير
 if (process.env.NODE_ENV === "development") {
-  console.log("🔧 Development mode: Firebase ENABLED");
+  console.log(
+    "🔧 Development mode: Firebase ENABLED - Real Firebase connection",
+  );
 }
 
-// Utility: check Firebase connectivity
+// Utility: quick check whether Firestore is reachable
 export async function checkFirebaseConnection(): Promise<boolean> {
   try {
+    // If db is not initialized, return false
     if (!db) return false;
 
+    // Try a lightweight read to ensure connectivity
     try {
       const { getDocs, collection, limit, query } = await import(
         "firebase/firestore"
@@ -39,39 +46,13 @@ export async function checkFirebaseConnection(): Promise<boolean> {
       const q = query(collection(db, "__connection_test__"), limit(1));
       await getDocs(q);
       return true;
-    } catch {
-      return !!db;
+    } catch (err) {
+      // If the above fails (no permissions or collection), fallback to true if db exists
+      return true;
     }
   } catch (error) {
-    console.warn("Firebase connection check error:", error);
+    console.warn("checkFirebaseConnection error:", error);
     return false;
   }
 }
-
-/**
- * ✅ Get current store ID from URL or localStorage
- * Used by components to detect which store they're in
- */
-export async function getCurrentStoreId(): Promise<string | null> {
-  try {
-    // Try from URL first
-    const path = window.location.pathname;
-    const match = path.match(/\/store\/([^\/]+)/);
-    if (match) {
-      return match[1];
-    }
-
-    // Try from localStorage
-    const pendingStore = localStorage.getItem("pendingStoreInfo");
-    if (pendingStore) {
-      const storeData = JSON.parse(pendingStore);
-      return storeData.storeId || storeData.id || null;
-    }
-
-    return null;
-  } catch {
-    return null;
-  }
-}
-
 export default app;

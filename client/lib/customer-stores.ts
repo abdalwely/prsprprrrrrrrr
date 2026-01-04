@@ -1,226 +1,270 @@
-// lib/customer-stores.ts
-import { 
-  doc, 
-  setDoc, 
-  getDoc, 
+import { db } from "./firebase";
+import {
+  doc,
+  setDoc,
+  getDoc,
   collection,
   updateDoc,
   query,
   where,
   getDocs,
   serverTimestamp,
-  increment 
+  deleteDoc,
+  orderBy,
+  DocumentData,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { storeService } from "./store-service";
+import { customerService } from "./src";
 
-export interface StoreLinkData {
-  name: string;
-  subdomain: string;
-  ownerId: string;
-  merchantId?: string;
-}
-
-// دالة ربط المتجر بالعميل في Firebase
+// ربط متجر بالعميل (للتوافق مع النظام القديم)
 export async function linkStoreToCustomer(
   customerId: string,
   storeId: string,
-  storeData: StoreLinkData
+  storeData: any,
 ): Promise<void> {
   try {
-    console.log("🔗 ربط المتجر بالعميل:", { customerId, storeId, storeData });
-    const linkId = `${customerId}_${storeId}`;
-    
-    // 1. إنشاء/تحديث رابط المتجر للعميل
-    const customerStoreRef = doc(db, "customerStores", linkId);
-    
-    const existingLink = await getDoc(customerStoreRef);
-    
-    if (existingLink.exists()) {
-      // تحديث الرابط الموجود
-      await updateDoc(customerStoreRef, {
-        lastVisited: serverTimestamp(),
-        visitsCount: increment(1)
-      });
-      console.log("✅ تم تحديث رابط المتجر الموجود");
-    } else {
-      // إنشاء رابط جديد
-      await setDoc(customerStoreRef, {
-        id: linkId,
-        customerId,
-        storeId,
-        storeName: storeData.name,
-        storeSubdomain: storeData.subdomain,
-        ownerId: storeData.ownerId,
-        merchantId: storeData.merchantId || storeData.ownerId,
-        favorite: false,
-        lastVisited: serverTimestamp(),
-        createdAt: serverTimestamp(),
-        visitsCount: 1
-      });
-      console.log("✅ تم إنشاء رابط متجر جديد للعميل");
-    }
-    
-    // 2. إضافة العميل إلى قائمة عملاء التاجر
-    const merchantCustomerRef = doc(db, "merchantCustomers", `${storeData.merchantId || storeData.ownerId}_${customerId}`);
-    
-    const existingCustomer = await getDoc(merchantCustomerRef);
-    
-    if (!existingCustomer.exists()) {
-      await setDoc(merchantCustomerRef, {
-        customerId,
-        merchantId: storeData.merchantId || storeData.ownerId,
-        storeId,
-        storeName: storeData.name,
-        customerEmail: await getCustomerEmail(customerId),
-        linkedAt: serverTimestamp(),
-        lastActivity: serverTimestamp()
-      });
-      console.log("✅ تم إضافة العميل إلى قائمة عملاء التاجر");
-    }
+    console.log("⚠️ linkStoreToCustomer: استخدم ensureStoreCustomer بدلاً مني");
 
-    // No localStorage mirroring — Firestore only
+    // استخدام ensureStoreCustomer بدلاً من هذا
+    const { ensureStoreCustomer } = await import("./src");
+    await ensureStoreCustomer(storeId, customerId);
+
+    console.log(`✅ تم ربط العميل ${customerId} بالمتجر ${storeId}`);
   } catch (error: any) {
-    console.error("❌ خطأ في ربط المتجر بالعميل:", error);
-    throw new Error(`فشل في ربط المتجر: ${error.message}`);
+    console.error("❌ خطأ:", error);
+    throw error;
   }
 }
 
-// دالة جلب متاجر العميل
+// جلب عملاء المتجر
+export async function getStoreCustomers(storeId: string): Promise<any[]> {
+  try {
+    return await customerService.getByStore(storeId);
+  } catch (error) {
+    console.error("❌ خطأ في جلب عملاء المتجر:", error);
+    return [];
+  }
+}
+
+// جلب المتاجر المرتبطة بالعميل
 export async function getCustomerStores(customerId: string): Promise<any[]> {
   try {
-    const storesQuery = query(
-      collection(db, "customerStores"),
-      where("customerId", "==", customerId)
-    );
-    
-    const querySnapshot = await getDocs(storesQuery);
-    const stores: any[] = [];
-    
-    querySnapshot.forEach((doc) => {
-      stores.push({ id: doc.id, ...doc.data() });
-    });
-    
-    console.log("📊 متاجر العميل:", stores.length);
-    return stores;
+    // في النظام الجديد، نبحث عن المتاجر التي فيها العميل
+    const allStores = await storeService.getAll();
+    const customerStores = [];
+
+    for (const store of allStores) {
+      const customer = await customerService.getStoreCustomer(
+        store.id,
+        customerId,
+      );
+      if (customer) {
+        customerStores.push({
+          storeId: store.id,
+          storeName: store.name,
+          storeLogo: store.logo,
+          storeSubdomain: store.subdomain,
+          customerData: customer,
+          joinedAt: customer.firstVisit,
+          lastVisit: customer.lastVisit,
+        });
+      }
+    }
+
+    return customerStores;
   } catch (error) {
     console.error("❌ خطأ في جلب متاجر العميل:", error);
     return [];
   }
 }
 
-// دالة جلب عملاء التاجر
-export async function getMerchantCustomers(merchantId: string): Promise<any[]> {
+// تحديث بيانات العميل في متجر معين
+export async function updateCustomerInStore(
+  storeId: string,
+  customerId: string,
+  data: any,
+): Promise<void> {
   try {
-    const customersQuery = query(
-      collection(db, "merchantCustomers"),
-      where("merchantId", "==", merchantId)
-    );
-    
-    const querySnapshot = await getDocs(customersQuery);
-    const customers: any[] = [];
-    
-    querySnapshot.forEach((doc) => {
-      customers.push({ id: doc.id, ...doc.data() });
+    await customerService.update(customerId, {
+      ...data,
+      storeId,
     });
-    
-    console.log("👥 عملاء التاجر:", customers.length);
-    return customers;
+
+    console.log(`✅ تم تحديث بيانات العميل ${customerId} في المتجر ${storeId}`);
   } catch (error) {
-    console.error("❌ خطأ في جلب عملاء التاجر (Firestore):", error);
-    // No localStorage fallback — return empty on error
+    console.error("❌ خطأ في تحديث بيانات العميل:", error);
+    throw error;
+  }
+}
+
+// إزالة عميل من متجر (تعطيل)
+export async function removeCustomerFromStore(
+  storeId: string,
+  customerId: string,
+): Promise<void> {
+  try {
+    const customerRef = doc(db, "stores", storeId, "customers", customerId);
+    await updateDoc(customerRef, {
+      isActive: false,
+      updatedAt: serverTimestamp(),
+    });
+
+    console.log(`✅ تم تعطيل العميل ${customerId} في المتجر ${storeId}`);
+  } catch (error) {
+    console.error("❌ خطأ في إزالة العميل من المتجر:", error);
+    throw error;
+  }
+}
+
+// إعادة تفعيل عميل في متجر
+export async function activateCustomerInStore(
+  storeId: string,
+  customerId: string,
+): Promise<void> {
+  try {
+    const customerRef = doc(db, "stores", storeId, "customers", customerId);
+    await updateDoc(customerRef, {
+      isActive: true,
+      updatedAt: serverTimestamp(),
+    });
+
+    console.log(`✅ تم تفعيل العميل ${customerId} في المتجر ${storeId}`);
+  } catch (error) {
+    console.error("❌ خطأ في تفعيل العميل:", error);
+    throw error;
+  }
+}
+
+// البحث عن عميل في متجر
+export async function searchCustomerInStore(
+  storeId: string,
+  searchTerm: string,
+): Promise<any[]> {
+  try {
+    return await customerService.search(storeId, searchTerm);
+  } catch (error) {
+    console.error("❌ خطأ في البحث عن عميل:", error);
     return [];
   }
 }
 
-// دالة لإزالة رابط العميل مع المتجر/التاجر
-export async function removeCustomerLink(customerId: string, storeId: string, merchantId?: string): Promise<void> {
+// جلب إحصائيات العميل في المتجر
+export async function getCustomerStoreStats(
+  storeId: string,
+  customerId: string,
+): Promise<{
+  totalOrders: number;
+  totalSpent: number;
+  firstOrderDate?: Date;
+  lastOrderDate?: Date;
+  averageOrderValue: number;
+}> {
   try {
-    const linkId = `${customerId}_${storeId}`;
+    const { orderService } = await import("./src");
+    const orders = await orderService.getByCustomer(customerId);
+    const storeOrders = orders.filter((order) => order.storeId === storeId);
 
-    // Try Firestore deletion if possible
-    try {
-      const { deleteDoc, doc } = await import('firebase/firestore');
-      await deleteDoc(doc(db, 'customerStores', linkId));
-      if (merchantId) {
-        await deleteDoc(doc(db, 'merchantCustomers', `${merchantId}_${customerId}`));
-      }
-      console.log('✅ removed link from Firestore:', linkId);
-      return;
-    } catch (err) {
-      console.error('❌ failed to remove link from Firestore:', err);
-      throw err;
-    }
+    const totalOrders = storeOrders.length;
+    const totalSpent = storeOrders.reduce((sum, order) => sum + order.total, 0);
+    const firstOrderDate =
+      storeOrders.length > 0
+        ? storeOrders[storeOrders.length - 1].createdAt
+        : undefined;
+    const lastOrderDate =
+      storeOrders.length > 0 ? storeOrders[0].createdAt : undefined;
+    const averageOrderValue = totalOrders > 0 ? totalSpent / totalOrders : 0;
+
+    return {
+      totalOrders,
+      totalSpent,
+      firstOrderDate,
+      lastOrderDate,
+      averageOrderValue,
+    };
   } catch (error) {
-    console.error('❌ removeCustomerLink failed:', error);
+    console.error("❌ خطأ في إحصائيات العميل:", error);
+    return {
+      totalOrders: 0,
+      totalSpent: 0,
+      averageOrderValue: 0,
+    };
+  }
+}
+
+// جلب آخر نشاط للعميل في المتجر
+export async function getCustomerLastActivity(
+  storeId: string,
+  customerId: string,
+): Promise<{
+  lastVisit: Date;
+  lastOrder?: Date;
+  lastCartUpdate?: Date;
+  lastFavoriteAdd?: Date;
+}> {
+  try {
+    const customer = await customerService.getStoreCustomer(
+      storeId,
+      customerId,
+    );
+    if (!customer) {
+      throw new Error("العميل غير موجود في هذا المتجر");
+    }
+
+    const { orderService } = await import("./src");
+    const orders = await orderService.getByCustomer(customerId);
+    const storeOrders = orders.filter((order) => order.storeId === storeId);
+
+    // جلب آخر طلب
+    const lastOrder =
+      storeOrders.length > 0 ? storeOrders[0].createdAt : undefined;
+
+    // جلب آخر تحديث للسلة (تخيلي - تحتاج لتطبيق)
+    const lastCartUpdate = undefined;
+
+    // جلب آخر إضافة للمفضلة (تخيلي - تحتاج لتطبيق)
+    const lastFavoriteAdd = undefined;
+
+    return {
+      lastVisit: customer.lastVisit,
+      lastOrder,
+      lastCartUpdate,
+      lastFavoriteAdd,
+    };
+  } catch (error) {
+    console.error("❌ خطأ في جلب آخر نشاط:", error);
     throw error;
   }
 }
 
-// دالة جلب بريد العميل
-async function getCustomerEmail(customerId: string): Promise<string> {
-  try {
-    const customerDoc = await getDoc(doc(db, "customers", customerId));
-    
-    if (customerDoc.exists()) {
-      const customerData = customerDoc.data();
-      return customerData.email || "";
-    }
-    
-    return "";
-  } catch (error) {
-    console.error("❌ خطأ في جلب بريد العميل:", error);
-    return "";
-  }
+// دوال التوافق مع النظام القديم
+export async function getLinkedStores(customerId: string): Promise<any[]> {
+  return getCustomerStores(customerId);
 }
 
-// دالة إضافة متجر للمفضلة
-export async function toggleFavoriteStore(
+export async function unlinkStoreFromCustomer(
   customerId: string,
   storeId: string,
-  isFavorite: boolean
 ): Promise<void> {
-  try {
-    const linkId = `${customerId}_${storeId}`;
-    await updateDoc(doc(db, "customerStores", linkId), {
-      favorite: isFavorite,
-      updatedAt: serverTimestamp()
-    });
-    console.log(`✅ تم ${isFavorite ? 'إضافة' : 'إزالة'} المتجر من المفضلة`);
-  } catch (error) {
-    console.error("❌ خطأ في تحديث المفضلة:", error);
-    throw error;
-  }
+  return removeCustomerFromStore(storeId, customerId);
 }
 
-// دالة التحقق من وجود رابط المتجر
-export async function checkStoreLink(
+export async function getStoreCustomerData(
+  storeId: string,
   customerId: string,
-  storeId: string
-): Promise<boolean> {
-  try {
-    const linkId = `${customerId}_${storeId}`;
+): Promise<any> {
+  return customerService.getStoreCustomer(storeId, customerId);
+}
 
-    try {
-      // Try Firestore first (if initialized)
-      if (db) {
-        const customerStoreRef = doc(db, "customerStores", linkId);
-        const existingLink = await getDoc(customerStoreRef);
-        if (existingLink.exists()) return true;
-      }
-    } catch (err) {
-      console.warn('⚠️ checkStoreLink Firestore check failed, falling back to localStorage:', err);
-    }
+// دوال التخزين المحلي القديمة (للتوافق)
+export function getStoredStores(): any[] {
+  console.warn("⚠️ getStoredStores: لم تعد مستخدمة في النظام الجديد");
+  return [];
+}
 
-    // Fallback: check localStorage links
-    try {
-      const customerStores = JSON.parse(localStorage.getItem('customerStores') || '[]');
-      return customerStores.some((l: any) => l.id === linkId || (l.customerId === customerId && l.storeId === storeId));
-    } catch (err) {
-      console.error('❌ checkStoreLink localStorage fallback failed:', err);
-      return false;
-    }
-  } catch (error) {
-    console.error("❌ خطأ في التحقق من رابط المتجر:", error);
-    return false;
-  }
+export function saveStoresToStorage(stores: any[]): void {
+  console.warn("⚠️ saveStoresToStorage: لم تعد مستخدمة في النظام الجديد");
+}
+
+export function clearStoredStores(): void {
+  console.warn("⚠️ clearStoredStores: لم تعد مستخدمة في النظام الجديد");
 }

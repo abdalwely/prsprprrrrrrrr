@@ -1,6 +1,6 @@
 // Store Management System for Local Development
 
-import { UserData } from "./auth-enhanced";
+import { UserData } from "./src/types/user.types";
 
 export interface Product {
   id: string;

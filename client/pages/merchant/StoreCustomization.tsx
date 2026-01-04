@@ -23,7 +23,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/lib/contexts/AuthContext";
 import { getStoreByOwnerId, updateStore, Store } from "@/lib/store-management";
 import {
   Palette,
@@ -292,7 +292,7 @@ export default function StoreCustomization() {
         const { collection, query, where, getDocs } = await import(
           "firebase/firestore"
         );
-        const { db } = await import("@/lib/firebase");
+        const { db } = await import("@/lib/src/firebase/firebase");
 
         const storesQuery = query(
           collection(db, "stores"),
@@ -348,7 +348,7 @@ export default function StoreCustomization() {
 
         try {
           const { doc, getDoc } = await import("firebase/firestore");
-          const { db } = await import("@/lib/firebase");
+          const { db } = await import("@/lib/src/firebase/firebase");
 
           const storeDoc = await getDoc(doc(db, "stores", knownStoreId));
 

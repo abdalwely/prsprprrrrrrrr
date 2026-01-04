@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import type { ShippingAddress } from "@/lib/firestore";
+import type { ShippingAddress } from "@/lib/src";
 
 interface ShippingAddressEditorProps {
   address: ShippingAddress;

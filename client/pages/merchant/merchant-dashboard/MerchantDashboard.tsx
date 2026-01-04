@@ -4,24 +4,21 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
-import {
-  storeService,
-  productService,
-  orderService,
-  categoryService,
-  customerService,
-  updateCustomerShippingAddress,
-  updateOrderShippingAddressWithGovernorate,
-} from "@/lib/firestore";
-import type {
-  Store,
-  Product,
-  Order,
-  Category,
-  Customer,
-  ShippingAddress,
-} from "@/lib/firestore";
+
+// ✅ الجديد (المسار الصحيح):
+import { storeService } from "@/lib/src/services/store/store.service";
+import { productService } from "@/lib/src/services/product/product.service";
+import { orderService } from "@/lib/src/services/order/order.service";
+import { customerService } from "@/lib/src/services/customer/customer.service";
+
+// الأنواع
+import type { Store } from "@/lib/src/types/store.types";
+import type { Product } from "@/lib/src/types/product.types";
+import type { Order } from "@/lib/src/types/order.types";
+import type { Category } from "@/lib/src/types/category.types";
+import type { ShippingAddress } from "@/lib/src/types/shared.types";
+
+// Contexts
 
 // استيراد مكونات الأقسام
 import OverviewTab from "./components/OverviewTab";
@@ -34,6 +31,7 @@ import AnalyticsTab from "./components/AnalyticsTab";
 
 // 🔥 استيراد StoreChecklist الجديد
 import StoreChecklist, { ChecklistItems } from "./components/StoreChecklist";
+import { categoryService } from "@/lib/src/services/category";
 
 // استيراد المكونات المشتركة
 import { DashboardHeader } from "./components/shared/Layout";
@@ -49,6 +47,11 @@ import {
   PaymentSettings,
   DesignSettings,
 } from "./types";
+import { useAuth } from "@/lib/contexts/AuthContext";
+import { updateCustomerShippingAddress } from "@/lib/src/services/customer/customer.service";
+import { updateOrderShippingAddressWithGovernorate } from "@/lib/src/services/order/order.service";
+import { LoadingSkeleton } from "./components/shared/LoadingSkeleton";
+import { useStore } from "@/lib/contexts/StoreContext";
 
 // قائمة المحافظات اليمنية
 export const YEMENI_GOVERNORATES = [
@@ -76,7 +79,9 @@ export const YEMENI_GOVERNORATES = [
 ];
 
 export default function MerchantComprehensiveDashboard() {
-  const { userData } = useAuth();
+  const { userData, loading: authLoading } = useAuth(); // 🔥 تغيير الاسم
+  const { store: contextStore, loading: storeLoading } = useStore();
+
   const navigate = useNavigate();
   const location = useLocation(); // 🔥 تم إضافة useLocation
   const { toast } = useToast();
@@ -773,7 +778,7 @@ export default function MerchantComprehensiveDashboard() {
   ) => {
     setSavingCustomerAddress(customerId);
     try {
-      await updateCustomerShippingAddress(customerId, shippingAddress);
+      await updateCustomerShippingAddress(customerId, { shippingAddress });
 
       toast({
         title: "✅ تم التحديث",
@@ -783,7 +788,7 @@ export default function MerchantComprehensiveDashboard() {
       // تحديث القائمة المحلية
       setCustomers(
         customers.map((customer) =>
-          customer.id === customerId
+          customer.uid === customerId
             ? { ...customer, shippingAddress }
             : customer,
         ),
@@ -809,7 +814,9 @@ export default function MerchantComprehensiveDashboard() {
   ) => {
     setSavingOrderAddress(orderId);
     try {
-      await updateOrderShippingAddressWithGovernorate(orderId, shippingAddress);
+      await updateOrderShippingAddressWithGovernorate(orderId, {
+        shippingAddress,
+      });
 
       toast({
         title: "✅ تم التحديث",
@@ -891,8 +898,102 @@ export default function MerchantComprehensiveDashboard() {
     });
   };
 
-  // حالة التحميل
-  if (loading) {
+  // // حالة التحميل
+  // if (loading) {
+  //   return (
+  //     <div className="min-h-screen flex flex-col">
+  //       <div className="border-b py-4 px-6">
+  //         <div className="flex items-center justify-between">
+  //           <Skeleton className="h-8 w-48" />
+  //           <Skeleton className="h-10 w-64" />
+  //         </div>
+  //       </div>
+  //       <div className="flex-1 container mx-auto px-6 py-8">
+  //         <div className="animate-pulse space-y-6">
+  //           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+  //             {[1, 2, 3, 4].map((i) => (
+  //               <Skeleton key={i} className="h-32 rounded-lg" />
+  //             ))}
+  //           </div>
+  //           <Skeleton className="h-64 rounded-lg" />
+  //         </div>
+  //       </div>
+  //     </div>
+  //   );
+  // }
+
+  // // حالة عدم وجود متجر
+  // if (!store) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center p-4">
+  //       <div className="w-full max-w-md text-center">
+  //         <h2 className="text-2xl font-bold mb-2">لا يوجد متجر</h2>
+  //         <p className="text-muted-foreground mb-6">
+  //           يبدو أنك لا تمتلك متجراً بعد. ابدأ رحلتك التجارية الآن!
+  //         </p>
+  //         <Button onClick={() => navigate("/create-store")} className="w-full">
+  //           إنشاء متجر جديد
+  //         </Button>
+  //       </div>
+  //     </div>
+  //   );
+  // }
+
+  // 🔧 أضف سجلات تشخيصية
+  useEffect(() => {
+    console.log("🎯 [MERCHANT-DASHBOARD] Mounted with state:", {
+      authLoading,
+      storeLoading,
+      userData: userData?.email,
+      contextStore: contextStore?.name,
+      localStore: store?.name,
+      localLoading: loading,
+    });
+  }, [authLoading, storeLoading, userData, contextStore, store, loading]);
+
+  // 🔧 تحميل البيانات عندما تتوفر السياقات
+  useEffect(() => {
+    console.log("🔄 [MERCHANT-DASHBOARD] useEffect triggered:", {
+      hasUserData: !!userData,
+      hasContextStore: !!contextStore,
+      authLoading,
+      storeLoading,
+    });
+
+    // انتظر حتى تكتمل تحميل السياقات
+    if (authLoading || (storeLoading && !contextStore)) {
+      console.log("⏳ [MERCHANT-DASHBOARD] Waiting for contexts...");
+      return;
+    }
+
+    // إذا لم يكن هناك مستخدم، أعد التوجيه
+    if (!userData) {
+      console.log("👤 [MERCHANT-DASHBOARD] No user data, redirecting...");
+      navigate("/login");
+      return;
+    }
+
+    // إذا كان هناك متجر في السياق ولكن ليس في الحالة المحلية، حمله
+    if (contextStore && !store) {
+      console.log(
+        "🏪 [MERCHANT-DASHBOARD] Context store available, loading merchant data...",
+      );
+      loadMerchantData();
+    }
+
+    // إذا لم يكن هناك متجر على الإطلاق
+    if (!contextStore && !storeLoading) {
+      console.log("📭 [MERCHANT-DASHBOARD] No store found");
+      setStore(null);
+      setLoading(false);
+    }
+  }, [userData, contextStore, authLoading, storeLoading]);
+
+  // ... بقية الكود
+
+  // حالة التحميل المعدلة
+  if (authLoading) {
+    console.log("⏳ [MERCHANT-DASHBOARD] Rendering skeleton (auth loading)");
     return (
       <div className="min-h-screen flex flex-col">
         <div className="border-b py-4 px-6">
@@ -915,8 +1016,15 @@ export default function MerchantComprehensiveDashboard() {
     );
   }
 
-  // حالة عدم وجود متجر
-  if (!store) {
+  // حالة التحميل المعدلة
+  if (authLoading) {
+    console.log("⏳ [MERCHANT-DASHBOARD] Rendering skeleton (auth loading)");
+    return <LoadingSkeleton />;
+  }
+
+  // حالة عدم وجود متجر - عرض مباشرة
+  if (!contextStore && !storeLoading) {
+    console.log("📭 [MERCHANT-DASHBOARD] Rendering no-store state");
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="w-full max-w-md text-center">
@@ -932,32 +1040,81 @@ export default function MerchantComprehensiveDashboard() {
     );
   }
 
+  // 🔧 أضف شرطاً لتحميل البيانات إذا كان المتجر محملاً ولكن البيانات لم تحمل بعد
+  if (contextStore && !store) {
+    console.log("🏪 [MERCHANT-DASHBOARD] Store exists but data not loaded");
+
+    // 🔥 هذا مهم: استخدم contextStore مباشرة إذا كان store محلياً null
+    const currentStore = contextStore as ExtendedStore;
+
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardHeader
+          store={currentStore} // ⬅️ استخدام contextStore مباشرة
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          navigate={navigate}
+          userData={userData}
+          activeTab={activeTab}
+          setActiveTab={handleTabChange}
+          updateSubTab={updateSubTab}
+          activeSubTab={activeSubTab}
+          setActiveSubTab={setActiveSubTab}
+        />
+
+        <main className="flex-1">
+          <div className="container mx-auto px-4 sm:px-6 py-8">
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">جاري تحميل بيانات المتجر...</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // 🔧 إذا وصلنا إلى هنا، فالمتجر والبيانات محملة
+  console.log(
+    "🎉 [MERCHANT-DASHBOARD] Rendering dashboard for:",
+    store?.name || contextStore?.name,
+  );
+
+  // 🔧 استخدام المتجر المناسب (المحلي أولاً، ثم السياقي)
+  const displayStore = store || (contextStore as ExtendedStore);
+
+  // 🔧 تأكد من أن displayStore ليس null
+  if (!displayStore) {
+    console.error("❌ [MERCHANT-DASHBOARD] No store to display!");
+    return <LoadingSkeleton />;
+  }
+
+  // 🎉 الآن اعرض لوحة التحكم
   return (
     <div className="min-h-screen bg-background">
       <DashboardHeader
-        store={store}
+        store={displayStore}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         navigate={navigate}
         userData={userData}
         activeTab={activeTab}
-        setActiveTab={handleTabChange} // 🔥 استخدام الدالة المحدثة
+        setActiveTab={handleTabChange}
         updateSubTab={updateSubTab}
-        activeSubTab={activeSubTab} // 🔥 تمرير التبويب الفرعي النشط
-        setActiveSubTab={setActiveSubTab} // 🔥 تمرير دالة التحديث
+        activeSubTab={activeSubTab}
+        setActiveSubTab={setActiveSubTab}
       />
 
       <main className="flex-1">
         <div className="container mx-auto px-4 sm:px-6 py-8">
           {/* 🔥 عرض Checklist تلقائياً للمتاجر الجديدة */}
-          {showChecklist && store && (
+          {showChecklist && displayStore && (
             <div className="mb-6">
               <StoreChecklist
-                storeId={store.id}
-                storeName={store.name}
-                complianceLevel={store.complianceLevel || "basic"}
+                storeId={displayStore.id}
+                storeName={displayStore.name}
+                complianceLevel={displayStore.complianceLevel || "basic"}
                 checklistItems={checklistItems}
-                //  ={handleUpdateChecklist}
                 onHide={handleHideChecklist}
                 onUpdate={function (
                   key: keyof ChecklistItems,
@@ -971,11 +1128,10 @@ export default function MerchantComprehensiveDashboard() {
 
           <Tabs
             value={activeTab}
-            onValueChange={handleTabChange} // 🔥 استخدام الدالة المحدثة
+            onValueChange={handleTabChange}
             className="space-y-6"
           >
-            {/* لا نحتاج إلى TabsList لأن التنقل في الهيدر */}
-
+            {/* محتوى التبويبات */}
             <TabsContent value="overview">
               <OverviewTab stats={stats} />
             </TabsContent>
@@ -987,23 +1143,50 @@ export default function MerchantComprehensiveDashboard() {
                 subActiveTab={subActiveTab.products}
                 setSubActiveTab={(tabId) => updateSubTab("products", tabId)}
                 navigate={navigate}
-                // updateChecklistItem={handleUpdateChecklist}
               />
             </TabsContent>
 
             <TabsContent value="orders">
               <OrdersTab
                 orders={orders}
-                stats={stats}
                 subActiveTab={subActiveTab.orders}
                 setSubActiveTab={(tabId) => updateSubTab("orders", tabId)}
                 navigate={navigate}
-                showConfirmDialog={showConfirmDialog}
-                editingOrder={editingOrder}
-                setEditingOrder={setEditingOrder}
                 handleUpdateOrderAddress={handleUpdateOrderAddress}
-                savingOrderAddress={savingOrderAddress}
-                setSavingOrderAddress={setSavingOrderAddress}
+                stats={{
+                  total: stats.totalOrders,
+                  pending: stats.pendingOrders,
+                  processing: stats.averageProcessingTime,
+                  shipped: 0,
+                  delivered: 0,
+                  revenue: stats.totalRevenue,
+                  averageOrder: stats.averageOrderValue,
+                }}
+                showConfirmDialog={function (
+                  title: string,
+                  message: string,
+                  onConfirm: () => void,
+                  type:
+                    | "shipping"
+                    | "customer"
+                    | "order"
+                    | "payment"
+                    | "product",
+                ): void {
+                  throw new Error("Function not implemented.");
+                }}
+                editingOrder={undefined}
+                setEditingOrder={function (
+                  value: React.SetStateAction<Order>,
+                ): void {
+                  throw new Error("Function not implemented.");
+                }}
+                savingOrderAddress={false}
+                setSavingOrderAddress={function (
+                  value: React.SetStateAction<boolean>,
+                ): void {
+                  throw new Error("Function not implemented.");
+                }}
               />
             </TabsContent>
 
@@ -1013,37 +1196,21 @@ export default function MerchantComprehensiveDashboard() {
                 subActiveTab={subActiveTab.customers}
                 setSubActiveTab={(tabId) => updateSubTab("customers", tabId)}
                 navigate={navigate}
-                showConfirmDialog={showConfirmDialog}
-                editingCustomer={editingCustomer}
-                setEditingCustomer={setEditingCustomer}
-                handleUpdateCustomerAddress={handleUpdateCustomerAddress}
-                savingCustomerAddress={savingCustomerAddress}
-                setSavingCustomerAddress={setSavingCustomerAddress}
               />
             </TabsContent>
 
             <TabsContent value="design">
               <DesignTab
-                store={store}
-                storeSettings={storeSettings}
-                setStoreSettings={setStoreSettings}
-                designSettings={designSettings}
-                setDesignSettings={setDesignSettings}
+                store={displayStore}
                 subActiveTab={subActiveTab.design}
                 setSubActiveTab={(tabId) => updateSubTab("design", tabId)}
                 loadMerchantData={loadMerchantData}
-                showConfirmDialog={showConfirmDialog}
-                handleSaveStoreSettings={handleSaveStoreSettings}
-                handleSaveDesignSettings={handleSaveDesignSettings}
-                savingStoreSettings={savingStoreSettings}
-                savingDesignSettings={savingDesignSettings}
-                loading={loading}
               />
             </TabsContent>
 
             <TabsContent value="settings">
               <SettingsTab
-                store={store}
+                store={displayStore}
                 shippingSettings={shippingSettings}
                 setShippingSettings={setShippingSettings}
                 paymentSettings={paymentSettings}
@@ -1057,7 +1224,7 @@ export default function MerchantComprehensiveDashboard() {
                 savingShippingSettings={savingShippingSettings}
                 savingPaymentSettings={savingPaymentSettings}
                 YEMENI_GOVERNORATES={YEMENI_GOVERNORATES}
-                checklistItems={checklistItems} // 🔥 تمرير Checklist
+                checklistItems={checklistItems}
                 updateChecklistItem={handleUpdateChecklist}
               />
             </TabsContent>
@@ -1067,7 +1234,7 @@ export default function MerchantComprehensiveDashboard() {
                 stats={stats}
                 subActiveTab={subActiveTab.analytics}
                 setSubActiveTab={(tabId) => updateSubTab("analytics", tabId)}
-                checklistItems={checklistItems} // 🔥 تمرير Checklist
+                checklistItems={checklistItems}
               />
             </TabsContent>
           </Tabs>

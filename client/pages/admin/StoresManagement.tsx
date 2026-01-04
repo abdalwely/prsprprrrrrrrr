@@ -10,8 +10,8 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
-import { storeService, Store } from "@/lib/firestore";
+import { useAuth } from "@/lib/contexts/AuthContext";
+import { storeService, Store } from "@/lib/src";
 import {
   Store as StoreIcon,
   Search,
@@ -176,7 +176,7 @@ export default function StoresManagement() {
   const loadStores = async () => {
     setLoading(true);
     try {
-      const storesData = await storeService.getAll(1, 1000);
+      const storesData = await storeService.getAll();
 
       const cleanedStores: SafeStore[] = storesData.map((store) => {
         const baseContact = {

@@ -41,9 +41,9 @@ import {
   Filter,
   Download,
 } from "lucide-react";
-import { customerService, orderService } from "@/lib/firestore";
-import { getCurrentStoreId } from "@/lib/firebase";
-import { StoreCustomer } from "@/lib/types";
+import { customerService, orderService } from "@/lib/src";
+import { StoreCustomer } from "@/lib/src";
+import { getCurrentStoreId } from "@/lib/src/firebase/firebase";
 
 const CustomersTab: React.FC = () => {
   const { toast } = useToast();

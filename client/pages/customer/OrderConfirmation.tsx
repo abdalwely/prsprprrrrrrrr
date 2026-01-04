@@ -22,53 +22,7 @@ import {
   Banknote,
   Building2,
 } from "lucide-react";
-import { orderService, storeService, type Order } from "@/lib/firestore";
-
-interface OrderItem {
-  productId: string;
-  name: string;
-  price: number;
-  quantity: number;
-  variant?: string;
-  image: string;
-}
-
-interface OrderData {
-  id: string;
-  storeId: string;
-  storeName: string;
-  customerId: string;
-  customerInfo: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone: string;
-  };
-  shippingAddress: {
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
-  items: OrderItem[];
-  subtotal: number;
-  shipping: number;
-  tax: number;
-  total: number;
-  paymentMethod: string;
-  paymentStatus: "pending" | "paid" | "failed" | "refunded";
-  orderStatus: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
-  trackingNumber?: string;
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-  storeContact?: {
-    phone?: string;
-    email?: string;
-  };
-  firestoreId?: string;
-}
+import { orderService, storeService, type Order } from "@/lib/src";
 
 export default function OrderConfirmation() {
   const { subdomain } = useParams();
@@ -76,7 +30,7 @@ export default function OrderConfirmation() {
   const location = useLocation();
   const { toast } = useToast();
 
-  const [order, setOrder] = useState<OrderData | null>(null);
+  const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [storeName, setStoreName] = useState<string>("المتجر");
 
@@ -221,18 +175,18 @@ export default function OrderConfirmation() {
     if (!order) return;
 
     const receiptContent = `
-      إيصال طلب - ${order.storeName}
+      إيصال طلب - ${order.storeId}
       رقم الطلب: ${order.id}
-      التاريخ: ${formatDate(order.createdAt)}
+      التاريخ: ${TimeRanges.arguments(order.createdAt)}
 
       معلومات العميل:
-      الاسم: ${order.customerInfo.firstName} ${order.customerInfo.lastName}
-      البريد الإلكتروني: ${order.customerInfo.email}
-      الهاتف: ${order.customerInfo.phone}
+      الاسم: ${order.customerSnapshot.firstName} ${order.customerSnapshot.lastName}
+      البريد الإلكتروني: ${order.customerSnapshot.email}
+      الهاتف: ${order.customerSnapshot.phone}
 
       العنوان:
       ${order.shippingAddress.street}
-      ${order.shippingAddress.city}, ${order.shippingAddress.state}
+      ${order.shippingAddress.city}, ${order.shippingAddress.district}
       ${order.shippingAddress.country}
       ${order.shippingAddress.zipCode ? `الرمز البريدي: ${order.shippingAddress.zipCode}` : ""}
 
@@ -384,7 +338,7 @@ export default function OrderConfirmation() {
                   <div>
                     <p className="text-gray-600">تاريخ الطلب</p>
                     <p className="font-semibold">
-                      {formatDate(order.createdAt)}
+                      {TimeRanges.arguments(order.createdAt)}
                     </p>
                   </div>
                   <div>
@@ -439,9 +393,9 @@ export default function OrderConfirmation() {
                           <p className="text-sm text-gray-600">
                             الكمية: {item.quantity}
                           </p>
-                          {item.variant && (
+                          {item.variantId && (
                             <p className="text-sm text-gray-500">
-                              {item.variant}
+                              {item.variantId}
                             </p>
                           )}
                         </div>
@@ -493,8 +447,8 @@ export default function OrderConfirmation() {
                 </h3>
                 <div className="space-y-2">
                   <p>
-                    <strong>الاسم:</strong> {order.customerInfo.firstName}{" "}
-                    {order.customerInfo.lastName}
+                    <strong>الاسم:</strong> {order.customerSnapshot.firstName}{" "}
+                    {order.customerSnapshot.lastName}
                   </p>
                   <p>
                     <strong>العنوان:</strong> {order.shippingAddress.street}
@@ -503,7 +457,7 @@ export default function OrderConfirmation() {
                     <strong>المدينة:</strong> {order.shippingAddress.city}
                   </p>
                   <p>
-                    <strong>المنطقة:</strong> {order.shippingAddress.state}
+                    <strong>المنطقة:</strong> {order.shippingAddress.district}
                   </p>
                   <p>
                     <strong>الدولة:</strong> {order.shippingAddress.country}
@@ -528,10 +482,10 @@ export default function OrderConfirmation() {
                 <div className="space-y-2">
                   <p>
                     <strong>البريد الإلكتروني:</strong>{" "}
-                    {order.customerInfo.email}
+                    {order.customerSnapshot.email}
                   </p>
                   <p>
-                    <strong>الهاتف:</strong> {order.customerInfo.phone}
+                    <strong>الهاتف:</strong> {order.customerSnapshot.phone}
                   </p>
                 </div>
               </CardContent>

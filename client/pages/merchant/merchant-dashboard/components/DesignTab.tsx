@@ -1,5 +1,5 @@
 // D:\New folder (2)\store\client\pages\merchant\merchant-dashboard\components\DesignTab.tsx
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Card,
   CardContent,
@@ -33,18 +33,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 // Icons
 import {
   Store as StoreIcon,
   Palette,
-  TrendingUp,
   Layout,
   Globe,
   FileText,
@@ -69,12 +62,9 @@ import {
   CheckSquare,
   XSquare,
   Eye,
-  EyeOff,
   Download,
   Printer,
-  Share2,
   Copy,
-  QrCode,
   MapPin,
   Phone,
   Mail,
@@ -86,12 +76,8 @@ import {
   CreditCard,
   Lock,
   Bell,
-  Globe as GlobeIcon,
   Moon,
   Sun,
-  Smartphone,
-  Monitor,
-  Tablet,
   UploadCloud,
   X,
   Plus,
@@ -101,94 +87,46 @@ import {
   ChevronRight,
   Info,
   HelpCircle,
-  Heart,
   ShoppingCart,
   Search,
-  Menu,
   Home,
   Star,
-  ThumbsUp,
-  MessageSquare,
-  Share,
-  Tag,
-  Percent,
-  Award,
-  Users as UsersIcon,
-  Package as PackageIcon,
   ShoppingBag,
   Filter,
   Grid,
-  List,
   Type,
-  Bold,
-  Italic,
-  Underline,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
+  Layers,
+  Droplets,
   Maximize2,
   Minimize2,
-  Layers,
   Box,
-  Droplets,
   PaintBucket,
   Brush,
   Crop,
-  Scissors,
   Frame,
-  CodeSquare,
-  Circle,
-  Square,
-  Hexagon,
-  Octagon,
   Sparkles,
   Zap,
-  Wind,
-  Feather,
-  Hammer,
   Wrench,
   Cog,
   Sliders,
-  ToggleLeft,
-  ToggleRight,
-  Radio,
   MousePointerClick,
-  Pointer,
-  Move,
-  RotateCw,
-  ZoomIn,
-  ZoomOut,
   Camera,
   Video,
-  Music,
   Headphones,
-  Mic,
   Volume2,
-  BellRing,
   Megaphone,
   Flag,
   ShieldCheck,
-  ShieldAlert,
-  ShieldOff,
   Key,
-  LockKeyhole,
-  Unlock,
   Fingerprint,
-  Scan,
-  QrCode as QrCodeIcon,
-  Barcode,
   Ticket,
   Gift,
   Trophy,
   Crown,
   Gem,
-  Diamond,
   Coins,
-  Banknote,
   Wallet,
-  CreditCard as CreditCardIcon,
   Receipt,
-  FileBarChart,
   PieChart,
   LineChart,
   TrendingUp as TrendingUpIcon,
@@ -200,123 +138,85 @@ import {
   ChevronUp,
   ChevronDown,
   ChevronLeft,
-  ChevronRight as ChevronRightIcon,
   MoveLeft,
   MoveRight,
   MoveUp,
   MoveDown,
   RotateCcw,
   Repeat,
-  RefreshCcw,
   Loader2,
+  BadgeCheck,
+  Crown as CrownIcon,
+  Zap as ZapIcon,
+  Target as TargetIcon,
+  XCircle,
+  User,
+  LogOut,
+  LogIn,
+  Key as KeyIcon,
+  AlertCircle as AlertCircleIcon,
+  AlertTriangle as AlertTriangleIcon,
+  Info as InfoIcon,
+  Check as CheckIcon,
+  X as XIcon,
+  Plus as PlusIcon,
+  Minus as MinusIcon,
+  Maximize as MaximizeIcon,
+  ExternalLink as ExternalLinkIcon,
+  Upload as UploadIcon,
+  Download as DownloadIcon,
+  Printer as PrinterIcon,
+  Camera as CameraIcon,
+  Film,
+  Headphones as HeadphonesIcon,
+  Volume2 as Volume2Icon,
+  Bell as BellIcon,
+  Award as AwardIcon,
+  Trophy as TrophyIcon,
+  Crown as CrownIcon2,
+  Gem as GemIcon,
+  Coins as CoinsIcon,
+  Wallet as WalletIcon,
+  Receipt as ReceiptIcon,
+  PieChart as PieChartIcon,
+  LineChart as LineChartIcon,
+  BarChart as BarChartIcon,
 } from "lucide-react";
 
 // Types and Services
-import { Store } from "@/lib/firestore";
-import { StoreSettings, DesignSettings } from "../types";
-import { storeService } from "@/lib/firestore";
+import { Store } from "@/lib/src";
+import { storeService } from "@/lib/src";
 import { toast } from "sonner";
 import {
-  StoreCustomizationEnhanced,
+  createBasicCustomization,
   ensureEnhancedCustomization,
-} from "@/lib/types/store";
-import { enhancedStoreTemplates } from "@/lib/enhanced-templates";
+} from "@/lib/src/types";
 
 // Types
-interface LocalStoreData {
-  name: string;
-  description: string;
-  industry: string;
-  taxNumber: string;
-  commercialRegistration: string;
-  currency: string;
-  contactEmail: string;
-  contactPhone: string;
-  address: string;
-  city: string;
-  governorate: string;
-  country: string;
-  originalCity: string;
-  zipCode: string;
-  language: string;
-  timezone: string;
-  businessActivities?: {
-    mainActivity: string;
-    subActivities: string[];
-    registrationNumber: string;
-    businessType: string;
-    legalStructure: string;
-  };
-  complianceSettings?: {
-    autoDetection: boolean;
-    strictMode: boolean;
-    notifyOnViolation: boolean;
-    allowedDeviations: string[];
-    reviewThreshold: number;
-  };
+interface DesignTabProps {
+  store: Store;
+  loadMerchantData: () => Promise<void>;
+  subActiveTab: string;
+  setSubActiveTab: (tabId: string) => void;
 }
 
 interface ConfirmDialogState {
   open: boolean;
   title: string;
   message: string;
-  onConfirm: () => void;
-  type: "store" | "design" | "template" | "reset";
+  onConfirm: () => Promise<void>;
+  type:
+    | "store"
+    | "design"
+    | "business"
+    | "compliance"
+    | "contact"
+    | "shipping"
+    | "payment"
+    | "taxes";
 }
 
-interface PreviewState {
-  colors: {
-    primary: string;
-    secondary: string;
-    background: string;
-    text: string;
-    border: string;
-  };
-  fonts: {
-    heading: string;
-    body: string;
-  };
-  layout: {
-    borderRadius: string;
-    spacing: string;
-  };
-}
-
-interface DesignTabProps {
-  store: Store;
-  storeSettings: StoreSettings;
-  setStoreSettings: (settings: StoreSettings) => void;
-  designSettings: DesignSettings;
-  setDesignSettings: (settings: DesignSettings) => void;
-  subActiveTab: string;
-  setSubActiveTab: (tabId: string) => void;
-  loadMerchantData: () => Promise<void>;
-  savingStoreSettings: boolean;
-  savingDesignSettings: boolean;
-  loading: boolean;
-}
-
-// Helper Functions
-const convertBorderRadius = (
-  value: string,
-): "small" | "medium" | "large" | "full" | "none" => {
-  switch (value) {
-    case "none":
-      return "none";
-    case "sm":
-      return "small";
-    case "md":
-      return "medium";
-    case "lg":
-      return "large";
-    case "xl":
-      return "full";
-    default:
-      return "medium";
-  }
-};
-
-// Constants
+// Constants - متوافقة مع storeService
 const YEMENI_GOVERNORATES = [
   "أبين",
   "عدن",
@@ -376,274 +276,323 @@ const TIMEZONES = [
   { value: "UTC", label: "التوقيت العالمي (UTC)" },
 ];
 
+const BUSINESS_TYPES = [
+  { value: "retail", label: "تجارة تجزئة" },
+  { value: "wholesale", label: "تجارة جملة" },
+  { value: "manufacturing", label: "تصنيع" },
+  { value: "services", label: "خدمات" },
+  { value: "import_export", label: "استيراد/تصدير" },
+  { value: "online_retail", label: "تجزئة إلكترونية" },
+  { value: "dropshipping", label: "دروبشيبينغ" },
+];
+
+const LEGAL_STRUCTURES = [
+  { value: "sole_proprietorship", label: "مؤسسة فردية" },
+  { value: "llc", label: "شركة ذات مسؤولية محدودة" },
+  { value: "joint_stock", label: "شركة مساهمة" },
+  { value: "partnership", label: "شركة تضامن" },
+  { value: "cooperative", label: "جمعية تعاونية" },
+];
+
+const DEVIATION_TYPES = [
+  { value: "price_variation", label: "تغير في الأسعار" },
+  { value: "product_variation", label: "اختلاف في المنتجات" },
+  { value: "delivery_time", label: "تغير في أوقات التوصيل" },
+  { value: "warranty_terms", label: "شروط الضمان" },
+  { value: "return_policy", label: "سياسة الإرجاع" },
+];
+
+// Design Constants
 const FONT_FAMILIES = [
-  { value: "Tajawal", label: "تاجوال" },
-  { value: "Cairo", label: "القاهرة" },
-  { value: "Almarai", label: "المراعي" },
-  { value: "IBM Plex Sans Arabic", label: "آي بي إم بلكس" },
-  { value: "Noto Sans Arabic", label: "نوتو سانس" },
-  { value: "Inter", label: "إنتر" },
-  { value: "Roboto", label: "روبوتو" },
-  { value: "Open Sans", label: "أوبن سانس" },
+  { value: "Tajawal", label: "Tajawal" },
+  { value: "Cairo", label: "Cairo" },
+  { value: "Almarai", label: "Almarai" },
+  { value: "IBM Plex Sans Arabic", label: "IBM Plex Sans Arabic" },
+  { value: "Noto Sans Arabic", label: "Noto Sans Arabic" },
+  { value: "Inter", label: "Inter" },
 ];
 
-const FONT_SIZES = [
-  { value: "14px", label: "صغير" },
-  { value: "16px", label: "متوسط" },
-  { value: "18px", label: "كبير" },
-  { value: "20px", label: "كبير جداً" },
+const COLORS = [
+  { value: "#3b82f6", label: "أزرق" },
+  { value: "#10b981", label: "أخضر" },
+  { value: "#8b5cf6", label: "بنفسجي" },
+  { value: "#f59e0b", label: "برتقالي" },
+  { value: "#ef4444", label: "أحمر" },
+  { value: "#06b6d4", label: "سماوي" },
 ];
 
-const BORDER_RADIUS_OPTIONS = [
-  { value: "none", label: "بدون" },
-  { value: "sm", label: "صغير" },
-  { value: "md", label: "متوسط" },
-  { value: "lg", label: "كبير" },
-  { value: "xl", label: "كبير جداً" },
-];
+// Custom Icons Components (لأيقونات غير مستوردة)
+const SmartphoneIcon = ({ className }: { className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <rect width="14" height="20" x="5" y="2" rx="2" ry="2" />
+    <path d="M12 18h.01" />
+  </svg>
+);
 
-const SPACING_OPTIONS = [
-  { value: "compact", label: "مضغوط" },
-  { value: "normal", label: "عادي" },
-  { value: "spacious", label: "فسيح" },
-];
-
-const HEADER_STYLES = [
-  { value: "fixed", label: "ثابت" },
-  { value: "static", label: "عادي" },
-  { value: "transparent", label: "شفاف" },
-  { value: "minimal", label: "بسيط" },
-];
-
-const FOOTER_STYLES = [
-  { value: "simple", label: "بسيط" },
-  { value: "detailed", label: "مفصل" },
-  { value: "minimal", label: "حد أدنى" },
-  { value: "corporate", label: "شركات" },
-];
-
-const CONTAINER_WIDTHS = [
-  { value: "full", label: "كامل الشاشة" },
-  { value: "container", label: "محتوى" },
-  { value: "narrow", label: "ضيق" },
-];
-
-const DEFAULT_DESIGN_SETTINGS: DesignSettings = {
-  primaryColor: "#3b82f6",
-  secondaryColor: "#10b981",
-  backgroundColor: "#ffffff",
-  textColor: "#333333",
-  textSecondaryColor: "#666666",
-  borderColor: "#e5e7eb",
-  successColor: "#10b981",
-  warningColor: "#f59e0b",
-  errorColor: "#ef4444",
-  linkColor: "#3b82f6",
-  fontFamily: "Tajawal",
-  headingFont: "Tajawal",
-  bodyFont: "Tajawal",
-  buttonFont: "Tajawal",
-  baseFontSize: "16px",
-  headingSize: "2rem",
-  lineHeight: "1.6",
-  letterSpacing: "normal",
-  headerStyle: "fixed",
-  footerStyle: "detailed",
-  containerWidth: "container",
-  productGridColumns: 4,
-  borderRadius: "md",
-  spacing: "normal",
-  showNavbar: true,
-  showFooter: true,
-  showSidebar: true,
-  showBackToTop: true,
-  adminMode: false,
-  logo: "",
-  favicon: "",
-  coverImage: "",
-  lazyLoadImages: true,
-  compressImages: true,
-  useWebP: true,
-  theme: "classic",
-};
+const BanknoteIcon = ({ className }: { className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <rect width="20" height="12" x="2" y="6" rx="2" />
+    <circle cx="12" cy="12" r="2" />
+    <path d="M6 12h.01M18 12h.01" />
+  </svg>
+);
 
 export default function DesignTab({
   store,
-  storeSettings,
-  setStoreSettings,
-  designSettings,
-  setDesignSettings,
+  loadMerchantData,
   subActiveTab,
   setSubActiveTab,
-  loadMerchantData,
-  savingStoreSettings,
-  savingDesignSettings,
-  loading,
 }: DesignTabProps) {
-  // Refs
-  const logoInputRef = useRef<HTMLInputElement>(null);
-  const faviconInputRef = useRef<HTMLInputElement>(null);
-  const coverInputRef = useRef<HTMLInputElement>(null);
-
   // States
-  const [localStoreData, setLocalStoreData] = useState<LocalStoreData>(() => ({
-    name: store.name || "",
-    description: store.description || "",
-    industry: store.industry || "general",
-    taxNumber: store.taxNumber || "",
-    commercialRegistration: store.commercialRegistration || "",
-    currency: store.currency || "YER",
-    contactEmail: store.contact?.email || "",
-    contactPhone: store.contact?.phone || "",
-    address: store.contact?.address || "",
-    city: store.contact?.city || "",
-    governorate: store.contact?.governorate || "",
-    country: store.contact?.country || "اليمن",
-    originalCity: store.contact?.originalCity || "",
-    zipCode: store.contact?.zipCode || "",
-    language: store.language || "ar",
-    timezone: store.timezone || "Asia/Aden",
-    businessActivities: store.businessActivities
-      ? {
-          mainActivity: store.businessActivities.mainActivity || "retail",
-          subActivities: store.businessActivities.subActivities || [],
-          registrationNumber: store.businessActivities.registrationNumber || "",
-          businessType: store.businessActivities.businessType || "retail",
-          legalStructure:
-            store.businessActivities.legalStructure || "sole_proprietorship",
-        }
-      : undefined,
-    complianceSettings: store.complianceSettings
-      ? {
-          autoDetection: store.complianceSettings.autoDetection ?? true,
-          strictMode: store.complianceSettings.strictMode ?? false,
-          notifyOnViolation: store.complianceSettings.notifyOnViolation ?? true,
-          allowedDeviations: store.complianceSettings.allowedDeviations ?? [],
-          reviewThreshold: store.complianceSettings.reviewThreshold ?? 10,
-        }
-      : {
-          autoDetection: true,
-          strictMode: false,
-          notifyOnViolation: true,
-          allowedDeviations: [],
-          reviewThreshold: 10,
-        },
-  }));
-
+  const [isLoading, setIsLoading] = useState(false);
   const [newSubActivity, setNewSubActivity] = useState("");
   const [allowedDeviation, setAllowedDeviation] = useState("");
-  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
-  const [isUploadingFavicon, setIsUploadingFavicon] = useState(false);
-  const [isUploadingCover, setIsUploadingCover] = useState(false);
 
   // Confirm Dialog State
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState>({
     open: false,
     title: "",
     message: "",
-    onConfirm: () => {},
+    onConfirm: async () => {},
     type: "store",
   });
 
-  // Preview State
-  const [previewState, setPreviewState] = useState<PreviewState>(() => ({
-    colors: {
-      primary: designSettings.primaryColor || "#3b82f6",
-      secondary: designSettings.secondaryColor || "#10b981",
-      background: designSettings.backgroundColor || "#ffffff",
-      text: designSettings.textColor || "#333333",
-      border: designSettings.borderColor || "#e5e7eb",
-    },
-    fonts: {
-      heading:
-        designSettings.headingFont || designSettings.fontFamily || "Tajawal",
-      body: designSettings.bodyFont || designSettings.fontFamily || "Tajawal",
-    },
-    layout: {
-      borderRadius: designSettings.borderRadius || "md",
-      spacing: designSettings.spacing || "normal",
-    },
-  }));
+  // Form States - تتوافق مع Store في Firestore
+  const [storeData, setStoreData] = useState({
+    // الحقول الأساسية
+    name: store.name || "",
+    description: store.description || "",
+    industry: store.industry || "general",
+    taxNumber: store.taxNumber || "",
+    commercialRegistration: store.commercialRegistration || "",
 
-  // Update preview when design settings change
+    // العملة واللغة والمنطقة الزمنية
+    currency: store.currency || "YER",
+    language: store.language || "ar",
+    timezone: store.timezone || "Asia/Aden",
+
+    // الأنشطة التجارية
+    businessActivities: store.businessActivities || {
+      mainActivity: "retail",
+      subActivities: [],
+      registrationNumber: `REG-${Date.now()}`,
+      taxNumber: "",
+      issueDate: new Date(),
+      expiryDate: undefined,
+      businessType: "retail",
+      industry: "general",
+      legalStructure: "sole_proprietorship",
+    },
+
+    // إعدادات الامتثال
+    complianceSettings: store.complianceSettings || {
+      autoDetection: true,
+      strictMode: false,
+      notifyOnViolation: true,
+      allowedDeviations: [],
+      reviewThreshold: 10,
+    },
+
+    // معلومات الاتصال
+    contact: store.contact || {
+      phone: "",
+      email: "",
+      address: "",
+      city: "",
+      governorate: "",
+      country: "اليمن",
+      zipCode: "",
+      originalCity: "",
+    },
+
+    // إعدادات الشحن
+    shipping: store.settings?.shipping || {
+      enabled: false,
+      freeShippingThreshold: 0,
+      shippingCost: 0,
+      defaultCost: 0,
+      zones: [],
+      methods: [],
+    },
+
+    // إعدادات الدفع
+    payment: store.settings?.payment || {
+      cashOnDelivery: true,
+      bankTransfer: false,
+      creditCard: false,
+      paypal: false,
+      stripe: false,
+      mada: false,
+      mobileWallet: false,
+      bankInfo: {
+        bankName: "",
+        accountNumber: "",
+        accountName: "",
+      },
+    },
+
+    // إعدادات الضرائب
+    taxes: store.settings?.taxes || {
+      enabled: false,
+      includeInPrice: false,
+      rate: 0,
+    },
+
+    // إعدادات الإشعارات
+    notifications: store.settings?.notifications || {
+      emailNotifications: true,
+      pushNotifications: true,
+      smsNotifications: false,
+    },
+  });
+
+  // Design Settings - من customization
+  const [designSettings, setDesignSettings] = useState(() => {
+    const customization = store.customization;
+    return {
+      // الألوان
+      primaryColor: customization?.colors?.primary || "#3b82f6",
+      secondaryColor: customization?.colors?.secondary || "#10b981",
+      backgroundColor: customization?.colors?.background || "#ffffff",
+      textColor: customization?.colors?.text || "#333333",
+      accentColor: customization?.colors?.accent || "#3b82f6",
+
+      // الخطوط
+      headingFont: customization?.fonts?.heading || "Tajawal",
+      bodyFont: customization?.fonts?.body || "Tajawal",
+
+      // التخطيط
+      headerStyle: customization?.layout?.headerStyle || "fixed",
+      footerStyle: customization?.layout?.footerStyle || "detailed",
+      productGridColumns: customization?.layout?.productGridColumns || 4,
+      containerWidth: customization?.layout?.containerWidth || "1200px",
+      borderRadius: customization?.layout?.borderRadius || "medium",
+      spacing: customization?.layout?.spacing || "normal",
+
+      // الشعار
+      logo: customization?.branding?.logo || "",
+    };
+  });
+
+  // Update form when store changes
   useEffect(() => {
-    setPreviewState({
-      colors: {
-        primary: designSettings.primaryColor,
-        secondary: designSettings.secondaryColor,
-        background: designSettings.backgroundColor || "#ffffff",
-        text: designSettings.textColor || "#333333",
-        border: designSettings.borderColor || "#e5e7eb",
+    setStoreData({
+      name: store.name || "",
+      description: store.description || "",
+      industry: store.industry || "general",
+      taxNumber: store.taxNumber || "",
+      commercialRegistration: store.commercialRegistration || "",
+      currency: store.currency || "YER",
+      language: store.language || "ar",
+      timezone: store.timezone || "Asia/Aden",
+      businessActivities: store.businessActivities || {
+        mainActivity: "retail",
+        subActivities: [],
+        registrationNumber: `REG-${Date.now()}`,
+        taxNumber: "",
+        issueDate: new Date(),
+        expiryDate: undefined,
+        businessType: "retail",
+        industry: "general",
+        legalStructure: "sole_proprietorship",
       },
-      fonts: {
-        heading: designSettings.headingFont || designSettings.fontFamily,
-        body: designSettings.bodyFont || designSettings.fontFamily,
+      complianceSettings: store.complianceSettings || {
+        autoDetection: true,
+        strictMode: false,
+        notifyOnViolation: true,
+        allowedDeviations: [],
+        reviewThreshold: 10,
       },
-      layout: {
-        borderRadius: designSettings.borderRadius || "md",
-        spacing: designSettings.spacing || "normal",
+      contact: store.contact || {
+        phone: "",
+        email: "",
+        address: "",
+        city: "",
+        governorate: "",
+        country: "اليمن",
+        zipCode: "",
+        originalCity: "",
+      },
+      shipping: store.settings?.shipping || {
+        enabled: false,
+        freeShippingThreshold: 0,
+        shippingCost: 0,
+        defaultCost: 0,
+        zones: [],
+        methods: [],
+      },
+      payment: store.settings?.payment || {
+        cashOnDelivery: true,
+        bankTransfer: false,
+        creditCard: false,
+        paypal: false,
+        stripe: false,
+        mada: false,
+        mobileWallet: false,
+        bankInfo: {
+          bankName: "",
+          accountNumber: "",
+          accountName: "",
+        },
+      },
+      taxes: store.settings?.taxes || {
+        enabled: false,
+        includeInPrice: false,
+        rate: 0,
+      },
+      notifications: store.settings?.notifications || {
+        emailNotifications: true,
+        pushNotifications: true,
+        smsNotifications: false,
       },
     });
-  }, [designSettings]);
 
-  // Update local data when store changes
-  useEffect(() => {
-    if (store) {
-      setLocalStoreData({
-        name: store.name || "",
-        description: store.description || "",
-        industry: store.industry || "general",
-        taxNumber: store.taxNumber || "",
-        commercialRegistration: store.commercialRegistration || "",
-        currency: store.currency || "YER",
-        contactEmail: store.contact?.email || "",
-        contactPhone: store.contact?.phone || "",
-        address: store.contact?.address || "",
-        city: store.contact?.city || "",
-        governorate: store.contact?.governorate || "",
-        country: store.contact?.country || "اليمن",
-        originalCity: store.contact?.originalCity || "",
-        zipCode: store.contact?.zipCode || "",
-        language: store.language || "ar",
-        timezone: store.timezone || "Asia/Aden",
-        businessActivities: store.businessActivities
-          ? {
-              mainActivity: store.businessActivities.mainActivity || "retail",
-              subActivities: store.businessActivities.subActivities || [],
-              registrationNumber:
-                store.businessActivities.registrationNumber || "",
-              businessType: store.businessActivities.businessType || "retail",
-              legalStructure:
-                store.businessActivities.legalStructure ||
-                "sole_proprietorship",
-            }
-          : undefined,
-        complianceSettings: store.complianceSettings
-          ? {
-              autoDetection: store.complianceSettings.autoDetection ?? true,
-              strictMode: store.complianceSettings.strictMode ?? false,
-              notifyOnViolation:
-                store.complianceSettings.notifyOnViolation ?? true,
-              allowedDeviations:
-                store.complianceSettings.allowedDeviations ?? [],
-              reviewThreshold: store.complianceSettings.reviewThreshold ?? 10,
-            }
-          : {
-              autoDetection: true,
-              strictMode: false,
-              notifyOnViolation: true,
-              allowedDeviations: [],
-              reviewThreshold: 10,
-            },
-      });
-    }
+    const customization = store.customization;
+    setDesignSettings({
+      primaryColor: customization?.colors?.primary || "#3b82f6",
+      secondaryColor: customization?.colors?.secondary || "#10b981",
+      backgroundColor: customization?.colors?.background || "#ffffff",
+      textColor: customization?.colors?.text || "#333333",
+      accentColor: customization?.colors?.accent || "#3b82f6",
+      headingFont: customization?.fonts?.heading || "Tajawal",
+      bodyFont: customization?.fonts?.body || "Tajawal",
+      headerStyle: customization?.layout?.headerStyle || "fixed",
+      footerStyle: customization?.layout?.footerStyle || "detailed",
+      productGridColumns: customization?.layout?.productGridColumns || 4,
+      containerWidth: customization?.layout?.containerWidth || "1200px",
+      borderRadius: customization?.layout?.borderRadius || "medium",
+      spacing: customization?.layout?.spacing || "normal",
+      logo: customization?.branding?.logo || "",
+    });
   }, [store]);
 
   // Helper Functions
   const showConfirmDialog = (
     title: string,
     message: string,
-    onConfirm: () => void,
+    onConfirm: () => Promise<void>,
     type: ConfirmDialogState["type"] = "store",
   ) => {
     setConfirmDialog({
@@ -655,178 +604,20 @@ export default function DesignTab({
     });
   };
 
-  const handleImageUpload = async (
-    file: File,
-    type: "logo" | "favicon" | "cover",
-  ): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        resolve(result);
-      };
-      reader.onerror = () => reject(new Error("فشل في قراءة الملف"));
-      reader.readAsDataURL(file);
-    });
-  };
+  // ============ Save Functions ============
 
-  const handleLogoUpload = async (file: File) => {
+  const saveStoreData = async () => {
+    setIsLoading(true);
     try {
-      setIsUploadingLogo(true);
-      const imageUrl = await handleImageUpload(file, "logo");
-      setDesignSettings({
-        ...designSettings,
-        logo: imageUrl,
-      });
-      toast.success("تم تحميل الشعار بنجاح");
-    } catch (error) {
-      toast.error("فشل في تحميل الشعار");
-      console.error("Error uploading logo:", error);
-    } finally {
-      setIsUploadingLogo(false);
-    }
-  };
-
-  const handleFaviconUpload = async (file: File) => {
-    try {
-      setIsUploadingFavicon(true);
-      const imageUrl = await handleImageUpload(file, "favicon");
-      setDesignSettings({
-        ...designSettings,
-        favicon: imageUrl,
-      });
-      toast.success("تم تحميل الأيقونة بنجاح");
-    } catch (error) {
-      toast.error("فشل في تحميل الأيقونة");
-      console.error("Error uploading favicon:", error);
-    } finally {
-      setIsUploadingFavicon(false);
-    }
-  };
-
-  const handleCoverUpload = async (file: File) => {
-    try {
-      setIsUploadingCover(true);
-      const imageUrl = await handleImageUpload(file, "cover");
-      setDesignSettings({
-        ...designSettings,
-        coverImage: imageUrl,
-      });
-      toast.success("تم تحميل صورة الغلاف بنجاح");
-    } catch (error) {
-      toast.error("فشل في تحميل صورة الغلاف");
-      console.error("Error uploading cover:", error);
-    } finally {
-      setIsUploadingCover(false);
-    }
-  };
-
-  const openLogoFileInput = () => {
-    logoInputRef.current?.click();
-  };
-
-  const openFaviconFileInput = () => {
-    faviconInputRef.current?.click();
-  };
-
-  const openCoverFileInput = () => {
-    coverInputRef.current?.click();
-  };
-
-  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      showConfirmDialog(
-        "تأكيد تحميل الشعار",
-        "هل تريد تحميل هذا الشعار للمتجر؟",
-        () => handleLogoUpload(file),
-        "design",
-      );
-    }
-    e.target.value = "";
-  };
-
-  const handleFaviconFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      showConfirmDialog(
-        "تأكيد تحميل الأيقونة",
-        "هل تريد تحميل هذه الأيقونة للمتجر؟",
-        () => handleFaviconUpload(file),
-        "design",
-      );
-    }
-    e.target.value = "";
-  };
-
-  const handleCoverFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      showConfirmDialog(
-        "تأكيد تحميل الغلاف",
-        "هل تريد تحميل صورة الغلاف للمتجر؟",
-        () => handleCoverUpload(file),
-        "design",
-      );
-    }
-    e.target.value = "";
-  };
-
-  const handleSaveFullStoreData = async () => {
-    try {
-      const updateData: any = {
-        name: localStoreData.name,
-        description: localStoreData.description,
-        industry: localStoreData.industry,
-        taxNumber: localStoreData.taxNumber,
-        commercialRegistration: localStoreData.commercialRegistration,
-        currency: localStoreData.currency,
-        language: localStoreData.language,
-        timezone: localStoreData.timezone,
-        contact: {
-          email: localStoreData.contactEmail,
-          phone: localStoreData.contactPhone,
-          address: localStoreData.address,
-          city: localStoreData.city,
-          governorate: localStoreData.governorate,
-          country: localStoreData.country,
-          originalCity: localStoreData.originalCity,
-          zipCode: localStoreData.zipCode,
-        },
-        businessActivities: localStoreData.businessActivities
-          ? {
-              mainActivity: localStoreData.businessActivities.mainActivity,
-              subActivities: localStoreData.businessActivities.subActivities,
-              registrationNumber:
-                localStoreData.businessActivities.registrationNumber,
-              businessType: localStoreData.businessActivities.businessType,
-              legalStructure: localStoreData.businessActivities.legalStructure,
-            }
-          : undefined,
-        complianceSettings: localStoreData.complianceSettings,
-        updatedAt: new Date(),
-      };
-
-      await storeService.update(store.id, updateData);
-
-      setStoreSettings({
-        ...storeSettings,
-        name: localStoreData.name,
-        description: localStoreData.description,
-        contactEmail: localStoreData.contactEmail,
-        contactPhone: localStoreData.contactPhone,
-        address: localStoreData.address,
-        city: localStoreData.city,
-        governorate: localStoreData.governorate,
-        country: localStoreData.country,
-        originalCity: localStoreData.originalCity,
-        zipCode: localStoreData.zipCode,
-        currency: localStoreData.currency,
-        language: localStoreData.language,
-        timezone: localStoreData.timezone,
-        taxNumber: localStoreData.taxNumber,
-        commercialRegistration: localStoreData.commercialRegistration,
-        industry: localStoreData.industry,
+      await storeService.update(store.id, {
+        name: storeData.name,
+        description: storeData.description,
+        industry: storeData.industry,
+        taxNumber: storeData.taxNumber,
+        commercialRegistration: storeData.commercialRegistration,
+        currency: storeData.currency,
+        language: storeData.language,
+        timezone: storeData.timezone,
       });
 
       toast.success("✅ تم حفظ بيانات المتجر بنجاح");
@@ -834,74 +625,111 @@ export default function DesignTab({
     } catch (error) {
       toast.error("❌ فشل في حفظ بيانات المتجر");
       console.error("Error saving store data:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleSaveDesignSettings = async () => {
+  const saveBusinessActivities = async () => {
+    setIsLoading(true);
     try {
-      const borderRadiusValue = convertBorderRadius(
-        designSettings.borderRadius || "md",
+      await storeService.updateBusinessActivities(
+        store.id,
+        storeData.businessActivities,
       );
 
-      // Create enhanced customization
-      const enhancedCustomization = ensureEnhancedCustomization(
-        store.customization,
-        {
-          colors: {
-            primary: designSettings.primaryColor,
-            secondary: designSettings.secondaryColor,
-            background: designSettings.backgroundColor || "#FFFFFF",
-            text: designSettings.textColor || "#333333",
-            accent: designSettings.linkColor || "#3b82f6",
-            headerBackground: designSettings.backgroundColor || "#FFFFFF",
-            footerBackground: "#F9FAFB",
-            cardBackground: "#FFFFFF",
-            borderColor: designSettings.borderColor || "#E5E7EB",
-          },
-          fonts: {
-            heading: designSettings.headingFont || designSettings.fontFamily,
-            body: designSettings.bodyFont || designSettings.fontFamily,
-            size: {
-              small: "0.875rem",
-              medium: designSettings.baseFontSize || "1rem",
-              large: "1.125rem",
-              xlarge: "1.25rem",
-            },
-          },
-          layout: {
-            headerStyle: designSettings.headerStyle || "fixed",
-            footerStyle: designSettings.footerStyle || "detailed",
-            productGridColumns: designSettings.productGridColumns || 4,
-            containerWidth: designSettings.containerWidth || "1200px",
-            borderRadius: borderRadiusValue,
-            spacing: designSettings.spacing || "normal",
-          },
-          branding: {
-            logo: designSettings.logo,
-            favicon: designSettings.favicon,
-            brandName: store.name,
-            brandDescription: { ar: store.description, en: "" },
-            brandColors: {
-              primary: designSettings.primaryColor,
-              secondary: designSettings.secondaryColor,
-              accent: designSettings.linkColor || "#3b82f6",
-              background: designSettings.backgroundColor || "#FFFFFF",
-              text: designSettings.textColor || "#333333",
-              textSecondary: designSettings.textSecondaryColor || "#666666",
-              border: designSettings.borderColor || "#E5E7EB",
-              success: designSettings.successColor || "#10B981",
-              warning: designSettings.warningColor || "#F59E0B",
-              error: designSettings.errorColor || "#EF4444",
-            },
-            showPoweredBy: true,
-            watermark: "",
+      toast.success("✅ تم حفظ الأنشطة التجارية بنجاح");
+      await loadMerchantData();
+    } catch (error) {
+      toast.error("❌ فشل في حفظ الأنشطة التجارية");
+      console.error("Error saving business activities:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const saveComplianceSettings = async () => {
+    setIsLoading(true);
+    try {
+      await storeService.updateComplianceSettings(
+        store.id,
+        storeData.complianceSettings,
+      );
+
+      toast.success("✅ تم حفظ إعدادات الامتثال بنجاح");
+      await loadMerchantData();
+    } catch (error) {
+      toast.error("❌ فشل في حفظ إعدادات الامتثال");
+      console.error("Error saving compliance settings:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const saveContactInfo = async () => {
+    setIsLoading(true);
+    try {
+      await storeService.updateContactWithGovernorate(
+        store.id,
+        storeData.contact,
+      );
+
+      toast.success("✅ تم حفظ معلومات الاتصال بنجاح");
+      await loadMerchantData();
+    } catch (error) {
+      toast.error("❌ فشل في حفظ معلومات الاتصال");
+      console.error("Error saving contact info:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const saveDesignSettings = async () => {
+    setIsLoading(true);
+    try {
+      // إنشاء customization أساسي جديد مع تحديثاتنا
+      const basicCustomization = createBasicCustomization({
+        colors: {
+          primary: designSettings.primaryColor,
+          secondary: designSettings.secondaryColor,
+          background: designSettings.backgroundColor,
+          text: designSettings.textColor,
+          accent: designSettings.accentColor,
+          headerBackground: designSettings.backgroundColor,
+          footerBackground: "#F9FAFB",
+          cardBackground: "#FFFFFF",
+          borderColor: "#E5E7EB",
+        },
+        fonts: {
+          heading: designSettings.headingFont,
+          body: designSettings.bodyFont,
+          size: {
+            small: "0.875rem",
+            medium: "1rem",
+            large: "1.125rem",
+            xlarge: "1.25rem",
           },
         },
-      );
+        layout: {
+          headerStyle: designSettings.headerStyle,
+          footerStyle: designSettings.footerStyle,
+          productGridColumns: designSettings.productGridColumns,
+          containerWidth: designSettings.containerWidth,
+          borderRadius: designSettings.borderRadius,
+          spacing: designSettings.spacing,
+        },
+        branding: {
+          logo: designSettings.logo,
+          favicon: store.customization?.branding?.favicon || "",
+        },
+      });
+
+      // تحويل إلى enhanced
+      const enhancedCustomization =
+        ensureEnhancedCustomization(basicCustomization);
 
       await storeService.update(store.id, {
         customization: enhancedCustomization,
-        updatedAt: new Date(),
       });
 
       toast.success("✅ تم حفظ إعدادات التصميم بنجاح");
@@ -909,19 +737,24 @@ export default function DesignTab({
     } catch (error) {
       toast.error("❌ فشل في حفظ إعدادات التصميم");
       console.error("Error saving design settings:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleSaveStoreSettings = async () => {
+  const saveStoreSettings = async () => {
+    setIsLoading(true);
     try {
       await storeService.update(store.id, {
         settings: {
-          ...store.settings,
-          currency: storeSettings.currency,
-          language: storeSettings.language,
-          timezone: storeSettings.timezone,
+          currency: storeData.currency,
+          language: storeData.language,
+          timezone: storeData.timezone,
+          notifications: storeData.notifications,
+          shipping: storeData.shipping,
+          payment: storeData.payment,
+          taxes: storeData.taxes,
         },
-        updatedAt: new Date(),
       });
 
       toast.success("✅ تم حفظ إعدادات المتجر بنجاح");
@@ -929,485 +762,83 @@ export default function DesignTab({
     } catch (error) {
       toast.error("❌ فشل في حفظ إعدادات المتجر");
       console.error("Error saving store settings:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  // Business Activities Helpers
   const handleAddSubActivity = () => {
-    if (newSubActivity.trim() && localStoreData.businessActivities) {
-      setLocalStoreData({
-        ...localStoreData,
+    if (newSubActivity.trim()) {
+      setStoreData({
+        ...storeData,
         businessActivities: {
-          ...localStoreData.businessActivities,
+          ...storeData.businessActivities,
           subActivities: [
-            ...localStoreData.businessActivities.subActivities,
+            ...storeData.businessActivities.subActivities,
             newSubActivity.trim(),
           ],
         },
       });
       setNewSubActivity("");
-      toast.success("تم إضافة النشاط الفرعي");
     }
   };
 
   const handleRemoveSubActivity = (index: number) => {
-    if (localStoreData.businessActivities) {
-      showConfirmDialog(
-        "تأكيد الحذف",
-        "هل تريد حذف هذا النشاط الفرعي؟",
-        () => {
-          const newSubActivities = [
-            ...localStoreData.businessActivities!.subActivities,
-          ];
-          newSubActivities.splice(index, 1);
-          setLocalStoreData({
-            ...localStoreData,
-            businessActivities: {
-              ...localStoreData.businessActivities!,
-              subActivities: newSubActivities,
-            },
-          });
-          toast.success("تم حذف النشاط الفرعي");
-        },
-        "store",
-      );
-    }
+    const newSubActivities = [...storeData.businessActivities.subActivities];
+    newSubActivities.splice(index, 1);
+    setStoreData({
+      ...storeData,
+      businessActivities: {
+        ...storeData.businessActivities,
+        subActivities: newSubActivities,
+      },
+    });
   };
 
+  // Compliance Settings Helpers
   const handleAddAllowedDeviation = () => {
-    if (allowedDeviation.trim() && localStoreData.complianceSettings) {
-      setLocalStoreData({
-        ...localStoreData,
+    if (allowedDeviation.trim()) {
+      setStoreData({
+        ...storeData,
         complianceSettings: {
-          ...localStoreData.complianceSettings,
+          ...storeData.complianceSettings,
           allowedDeviations: [
-            ...localStoreData.complianceSettings.allowedDeviations,
+            ...storeData.complianceSettings.allowedDeviations,
             allowedDeviation.trim(),
           ],
         },
       });
       setAllowedDeviation("");
-      toast.success("تم إضافة الانحراف المسموح");
     }
   };
 
   const handleRemoveAllowedDeviation = (index: number) => {
-    if (localStoreData.complianceSettings) {
-      showConfirmDialog(
-        "تأكيد الحذف",
-        "هل تريد حذف هذا الانحراف المسموح؟",
-        () => {
-          const newDeviations = [
-            ...localStoreData.complianceSettings!.allowedDeviations,
-          ];
-          newDeviations.splice(index, 1);
-          setLocalStoreData({
-            ...localStoreData,
-            complianceSettings: {
-              ...localStoreData.complianceSettings!,
-              allowedDeviations: newDeviations,
-            },
-          });
-          toast.success("تم حذف الانحراف المسموح");
-        },
-        "store",
-      );
-    }
-  };
-
-  const handleResetDesign = () => {
-    showConfirmDialog(
-      "تأكيد إعادة التعيين",
-      "هل تريد إعادة تعيين جميع إعدادات التصميم إلى القيم الافتراضية؟",
-      () => {
-        setDesignSettings(DEFAULT_DESIGN_SETTINGS);
-        toast.success("✅ تم إعادة تعيين التصميم");
-      },
-      "reset",
-    );
-  };
-
-  const updateComplianceSetting = (
-    key: keyof NonNullable<LocalStoreData["complianceSettings"]>,
-    value: any,
-  ) => {
-    setLocalStoreData((prev) => ({
-      ...prev,
+    const newDeviations = [...storeData.complianceSettings.allowedDeviations];
+    newDeviations.splice(index, 1);
+    setStoreData({
+      ...storeData,
       complianceSettings: {
-        autoDetection: prev.complianceSettings?.autoDetection ?? true,
-        strictMode: prev.complianceSettings?.strictMode ?? false,
-        notifyOnViolation: prev.complianceSettings?.notifyOnViolation ?? true,
-        allowedDeviations: prev.complianceSettings?.allowedDeviations ?? [],
-        reviewThreshold: prev.complianceSettings?.reviewThreshold ?? 10,
-        [key]: value,
+        ...storeData.complianceSettings,
+        allowedDeviations: newDeviations,
       },
-    }));
+    });
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard
-      .writeText(text)
-      .then(() => toast.success("✅ تم النسخ إلى الحافظة"))
-      .catch(() => toast.error("❌ فشل في النسخ"));
-  };
-
-  const getStoreUrl = () => {
-    if (storeSettings.customDomain) {
-      return `https://${storeSettings.customDomain}`;
-    }
-    return `https://localhost:8080/store/${store.subdomain}`;
-  };
-
-  // Apply template customization
-  const applyTemplate = (templateId: string) => {
-    const template = enhancedStoreTemplates.find((t) => t.id === templateId);
-    if (!template) return;
-
-    showConfirmDialog(
-      "تأكيد تطبيق القالب",
-      `هل تريد تطبيق قالب "${template.name.ar}" على متجرك؟`,
-      () => {
-        const customization = template.customization;
-
-        // Update design settings
-        setDesignSettings({
-          ...designSettings,
-          primaryColor: customization.colors.primary,
-          secondaryColor: customization.colors.secondary,
-          backgroundColor: customization.colors.background,
-          textColor: customization.colors.text,
-          borderColor: customization.colors.borderColor,
-          fontFamily: customization.fonts.heading,
-          headingFont: customization.fonts.heading,
-          bodyFont: customization.fonts.body,
-          baseFontSize: customization.fonts.size.medium,
-          headerStyle: customization.layout.headerStyle,
-          footerStyle: customization.layout.footerStyle,
-          containerWidth: customization.layout.containerWidth,
-          productGridColumns: customization.layout.productGridColumns,
-          borderRadius:
-            customization.layout.borderRadius === "small"
-              ? "sm"
-              : customization.layout.borderRadius === "medium"
-                ? "md"
-                : customization.layout.borderRadius === "large"
-                  ? "lg"
-                  : "md",
-          spacing: customization.layout.spacing,
-          logo: customization.branding.logo,
-        });
-
-        toast.success(`✅ تم تطبيق قالب "${template.name.ar}"`);
-      },
-      "template",
-    );
-  };
-
-  // Design Tabs
-  const designTabs = [
-    {
-      id: "colors",
-      label: "الألوان",
-      icon: Palette,
-      description: "تخصيص نظام الألوان",
-    },
-    {
-      id: "typography",
-      label: "الخطوط",
-      icon: Type,
-      description: "إعدادات الخطوط والنصوص",
-    },
-    {
-      id: "layout",
-      label: "التخطيط",
-      icon: Layout,
-      description: "تخطيط الصفحة والمكونات",
-    },
-    {
-      id: "branding",
-      label: "الشعار والصور",
-      icon: ImageIcon,
-      description: "الصور والشعارات",
-    },
-    {
-      id: "templates",
-      label: "القوالب",
-      icon: Layers,
-      description: "قوالب جاهزة",
-    },
-  ];
-
-  // Settings Tabs
+  // Tabs Configuration - فقط التبويبات المتوافقة مع storeService
   const settingsTabs = [
     { id: "store-data", label: "بيانات المتجر", icon: StoreIcon },
     { id: "business-activities", label: "الأنشطة التجارية", icon: Building },
     { id: "compliance", label: "إعدادات الامتثال", icon: Shield },
     { id: "contact-info", label: "معلومات الاتصال", icon: MapPin },
     { id: "design", label: "تصميم المتجر", icon: Palette },
-    { id: "themes", label: "متجر الثيمات", icon: Layout },
-    { id: "domain", label: "دومين المتجر", icon: Globe },
-    { id: "pages", label: "الصفحات التعريفية", icon: FileText },
-    { id: "banner", label: "الشريط الترويجي", icon: AlertCircle },
-    { id: "links", label: "روابط مخصصة", icon: LinkIcon },
-    { id: "languages", label: "اللغات", icon: GlobeIcon },
-    { id: "currencies", label: "العملات", icon: DollarSign },
-    { id: "maintenance", label: "وضع الصيانة", icon: WifiIcon },
-    { id: "advanced", label: "الإعدادات المتقدمة", icon: Settings },
+    { id: "shipping", label: "إعدادات الشحن", icon: Truck },
+    { id: "payment", label: "إعدادات الدفع", icon: CreditCard },
+    { id: "taxes", label: "إعدادات الضرائب", icon: Receipt },
   ];
-
-  // Preview Component
-  const PreviewComponent = () => (
-    <div className="sticky top-4">
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Eye className="h-5 w-5" />
-            معاينة مباشرة
-          </CardTitle>
-          <CardDescription>معاينة التغييرات فورياً قبل الحفظ</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div
-            className="p-6 rounded-lg border-2 border-dashed mb-4 transition-all duration-300"
-            style={{
-              backgroundColor: previewState.colors.background,
-              color: previewState.colors.text,
-              fontFamily: previewState.fonts.body,
-              borderRadius:
-                previewState.layout.borderRadius === "none"
-                  ? "0"
-                  : previewState.layout.borderRadius === "sm"
-                    ? "0.375rem"
-                    : previewState.layout.borderRadius === "md"
-                      ? "0.5rem"
-                      : previewState.layout.borderRadius === "lg"
-                        ? "0.75rem"
-                        : previewState.layout.borderRadius === "xl"
-                          ? "1rem"
-                          : "0.5rem",
-            }}
-          >
-            {/* Header Preview */}
-            <div
-              className="flex items-center justify-between p-4 mb-4 rounded"
-              style={{
-                backgroundColor: previewState.colors.primary + "20",
-                borderBottom: `2px solid ${previewState.colors.primary}`,
-              }}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-10 h-10 rounded flex items-center justify-center"
-                  style={{
-                    backgroundColor: previewState.colors.primary,
-                    color: "white",
-                  }}
-                >
-                  <StoreIcon className="h-6 w-6" />
-                </div>
-                <span
-                  className="font-bold"
-                  style={{
-                    fontFamily: previewState.fonts.heading,
-                    color: previewState.colors.text,
-                  }}
-                >
-                  {localStoreData.name || "اسم المتجر"}
-                </span>
-              </div>
-              <div className="flex gap-2">
-                <div
-                  className="w-8 h-8 rounded-full"
-                  style={{ backgroundColor: previewState.colors.secondary }}
-                />
-                <div
-                  className="w-8 h-8 rounded-full"
-                  style={{ backgroundColor: previewState.colors.primary }}
-                />
-              </div>
-            </div>
-
-            {/* Content Preview */}
-            <div className="space-y-4">
-              <div
-                className="p-4 rounded border"
-                style={{
-                  borderColor: previewState.colors.border,
-                  backgroundColor: previewState.colors.background,
-                }}
-              >
-                <h3
-                  className="font-semibold mb-2"
-                  style={{
-                    fontFamily: previewState.fonts.heading,
-                    color: previewState.colors.primary,
-                  }}
-                >
-                  بطاقة المنتج
-                </h3>
-                <p
-                  className="text-sm mb-3"
-                  style={{ color: previewState.colors.text }}
-                >
-                  هذا مثال على بطاقة منتج في متجرك
-                </p>
-                <div className="flex gap-2">
-                  <div
-                    className="px-3 py-1 text-sm rounded"
-                    style={{
-                      backgroundColor: previewState.colors.primary,
-                      color: "white",
-                    }}
-                  >
-                    إضافة للسلة
-                  </div>
-                  <div
-                    className="px-3 py-1 text-sm rounded border"
-                    style={{
-                      borderColor: previewState.colors.border,
-                      color: previewState.colors.text,
-                    }}
-                  >
-                    المفضلة
-                  </div>
-                </div>
-              </div>
-
-              {/* Color Palette Preview */}
-              <div className="grid grid-cols-5 gap-2">
-                {Object.entries(previewState.colors).map(([key, color]) => (
-                  <TooltipProvider key={key}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div
-                          className="h-6 rounded cursor-help"
-                          style={{ backgroundColor: color }}
-                          title={`${key}: ${color}`}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="capitalize">
-                          {key}: {color}
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                ))}
-              </div>
-
-              {/* Typography Preview */}
-              <div className="space-y-2">
-                <h4
-                  className="text-sm font-medium"
-                  style={{ color: previewState.colors.text }}
-                >
-                  عينة الخط:
-                </h4>
-                <p
-                  className="text-lg leading-relaxed"
-                  style={{ fontFamily: previewState.fonts.body }}
-                >
-                  مرحباً بك في متجرنا! اكتشف أفضل المنتجات بأفضل الأسعار.
-                </p>
-                <p
-                  className="text-sm"
-                  style={{
-                    fontFamily: previewState.fonts.heading,
-                    color: previewState.colors.primary,
-                  }}
-                >
-                  هذا عنوان باستخدام خط العناوين
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-xs text-muted-foreground space-y-1">
-            <div className="flex justify-between">
-              <span>اللون الأساسي:</span>
-              <code>{previewState.colors.primary}</code>
-            </div>
-            <div className="flex justify-between">
-              <span>اللون الثانوي:</span>
-              <code>{previewState.colors.secondary}</code>
-            </div>
-            <div className="flex justify-between">
-              <span>خط النص:</span>
-              <span>{previewState.fonts.body}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>شكل الزوايا:</span>
-              <span>{previewState.layout.borderRadius}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1"
-              onClick={() => window.open(`/preview/${store.id}`, "_blank")}
-            >
-              <ExternalLink className="h-4 w-4 ml-2" />
-              معاينة كاملة
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1"
-              onClick={() => {
-                const dataStr = JSON.stringify(designSettings, null, 2);
-                const dataUri =
-                  "data:application/json;charset=utf-8," +
-                  encodeURIComponent(dataStr);
-                const linkElement = document.createElement("a");
-                linkElement.setAttribute("href", dataUri);
-                linkElement.setAttribute(
-                  "download",
-                  `design-settings-${store.name}.json`,
-                );
-                linkElement.click();
-                toast.success("✅ تم تصدير إعدادات التصميم");
-              }}
-            >
-              <Download className="h-4 w-4 ml-2" />
-              تصدير
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
 
   return (
     <div className="space-y-6">
-      {/* Hidden File Inputs */}
-      <input
-        type="file"
-        ref={logoInputRef}
-        onChange={handleLogoFileChange}
-        accept="image/*"
-        className="hidden"
-      />
-      <input
-        type="file"
-        ref={faviconInputRef}
-        onChange={handleFaviconFileChange}
-        accept="image/*"
-        className="hidden"
-      />
-      <input
-        type="file"
-        ref={coverInputRef}
-        onChange={handleCoverFileChange}
-        accept="image/*"
-        className="hidden"
-      />
-
       {/* Confirm Dialog */}
       <AlertDialog
         open={confirmDialog.open}
@@ -1423,21 +854,30 @@ export default function DesignTab({
           <AlertDialogFooter>
             <AlertDialogCancel>إلغاء</AlertDialogCancel>
             <AlertDialogAction
-              onClick={confirmDialog.onConfirm}
-              className={
-                confirmDialog.type === "reset"
-                  ? "bg-destructive hover:bg-destructive/90"
-                  : ""
-              }
+              onClick={async () => {
+                try {
+                  await confirmDialog.onConfirm();
+                } catch (error) {
+                  console.error("Error in confirm action:", error);
+                }
+              }}
+              disabled={isLoading}
             >
-              تأكيد
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                  جاري الحفظ...
+                </>
+              ) : (
+                "تأكيد الحفظ"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       {/* Quick Navigation */}
-      <div className="flex flex-wrap gap-2">
+      {/* <div className="flex flex-wrap gap-2">
         {settingsTabs.map((tab) => {
           const Icon = tab.icon;
           return (
@@ -1453,1265 +893,1519 @@ export default function DesignTab({
             </Button>
           );
         })}
-      </div>
+      </div> */}
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Settings Panel */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Store Data Tab */}
-          {subActiveTab === "store-data" && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <StoreIcon className="h-5 w-5" />
-                  البيانات الأساسية للمتجر
-                </CardTitle>
-                <CardDescription>
-                  إدارة المعلومات الأساسية والإعدادات العامة للمتجر
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="store-name">اسم المتجر *</Label>
-                    <Input
-                      id="store-name"
-                      value={localStoreData.name}
-                      onChange={(e) =>
-                        setLocalStoreData({
-                          ...localStoreData,
-                          name: e.target.value,
-                        })
-                      }
-                      placeholder="أدخل اسم المتجر"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="store-industry">مجال النشاط *</Label>
-                    <Select
-                      value={localStoreData.industry}
-                      onValueChange={(value) =>
-                        setLocalStoreData({
-                          ...localStoreData,
-                          industry: value,
-                        })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="اختر مجال النشاط" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {INDUSTRIES.map((industry) => (
-                          <SelectItem
-                            key={industry.value}
-                            value={industry.value}
-                          >
-                            {industry.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="store-currency">العملة *</Label>
-                    <Select
-                      value={localStoreData.currency}
-                      onValueChange={(value) =>
-                        setLocalStoreData({
-                          ...localStoreData,
-                          currency: value,
-                        })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="اختر العملة" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {CURRENCIES.map((currency) => (
-                          <SelectItem
-                            key={currency.value}
-                            value={currency.value}
-                          >
-                            {currency.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="store-language">اللغة *</Label>
-                    <Select
-                      value={localStoreData.language}
-                      onValueChange={(value) =>
-                        setLocalStoreData({
-                          ...localStoreData,
-                          language: value,
-                        })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="اختر اللغة" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {LANGUAGES.map((lang) => (
-                          <SelectItem key={lang.value} value={lang.value}>
-                            {lang.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
+      <div className="space-y-6">
+        {/* Store Data Tab */}
+        {subActiveTab === "store-data" && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <StoreIcon className="h-5 w-5" />
+                البيانات الأساسية للمتجر
+              </CardTitle>
+              <CardDescription>إدارة المعلومات الأساسية للمتجر</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="store-description">وصف المتجر</Label>
-                  <Textarea
-                    id="store-description"
-                    className="min-h-[120px]"
-                    value={localStoreData.description}
+                  <Label htmlFor="store-name">اسم المتجر *</Label>
+                  <Input
+                    id="store-name"
+                    value={storeData.name}
                     onChange={(e) =>
-                      setLocalStoreData({
-                        ...localStoreData,
-                        description: e.target.value,
+                      setStoreData({
+                        ...storeData,
+                        name: e.target.value,
                       })
                     }
-                    placeholder="أدخل وصفاً مفصلاً لمتجرك..."
+                    placeholder="أدخل اسم المتجر"
+                    required
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="tax-number">الرقم الضريبي</Label>
-                    <Input
-                      id="tax-number"
-                      value={localStoreData.taxNumber}
-                      onChange={(e) =>
-                        setLocalStoreData({
-                          ...localStoreData,
-                          taxNumber: e.target.value,
-                        })
-                      }
-                      placeholder="أدخل الرقم الضريبي"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="store-industry">مجال النشاط *</Label>
+                  <Select
+                    value={storeData.industry}
+                    onValueChange={(value) =>
+                      setStoreData({
+                        ...storeData,
+                        industry: value,
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر مجال النشاط" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {INDUSTRIES.map((industry) => (
+                        <SelectItem key={industry.value} value={industry.value}>
+                          {industry.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="commercial-reg">السجل التجاري</Label>
-                    <Input
-                      id="commercial-reg"
-                      value={localStoreData.commercialRegistration}
-                      onChange={(e) =>
-                        setLocalStoreData({
-                          ...localStoreData,
-                          commercialRegistration: e.target.value,
-                        })
-                      }
-                      placeholder="أدخل رقم السجل التجاري"
-                    />
+                <div className="space-y-2">
+                  <Label htmlFor="store-currency">العملة *</Label>
+                  <Select
+                    value={storeData.currency}
+                    onValueChange={(value) =>
+                      setStoreData({
+                        ...storeData,
+                        currency: value,
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر العملة" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CURRENCIES.map((currency) => (
+                        <SelectItem key={currency.value} value={currency.value}>
+                          {currency.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="store-language">اللغة *</Label>
+                  <Select
+                    value={storeData.language}
+                    onValueChange={(value) =>
+                      setStoreData({
+                        ...storeData,
+                        language: value,
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر اللغة" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LANGUAGES.map((lang) => (
+                        <SelectItem key={lang.value} value={lang.value}>
+                          {lang.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="store-description">وصف المتجر</Label>
+                <Textarea
+                  id="store-description"
+                  className="min-h-[120px]"
+                  value={storeData.description}
+                  onChange={(e) =>
+                    setStoreData({
+                      ...storeData,
+                      description: e.target.value,
+                    })
+                  }
+                  placeholder="أدخل وصفاً مفصلاً لمتجرك..."
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="tax-number">الرقم الضريبي</Label>
+                  <Input
+                    id="tax-number"
+                    value={storeData.taxNumber}
+                    onChange={(e) =>
+                      setStoreData({
+                        ...storeData,
+                        taxNumber: e.target.value,
+                      })
+                    }
+                    placeholder="أدخل الرقم الضريبي"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="commercial-reg">السجل التجاري</Label>
+                  <Input
+                    id="commercial-reg"
+                    value={storeData.commercialRegistration}
+                    onChange={(e) =>
+                      setStoreData({
+                        ...storeData,
+                        commercialRegistration: e.target.value,
+                      })
+                    }
+                    placeholder="أدخل رقم السجل التجاري"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="timezone">المنطقة الزمنية</Label>
+                  <Select
+                    value={storeData.timezone}
+                    onValueChange={(value) =>
+                      setStoreData({
+                        ...storeData,
+                        timezone: value,
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر المنطقة الزمنية" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TIMEZONES.map((tz) => (
+                        <SelectItem key={tz.value} value={tz.value}>
+                          {tz.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="flex gap-4 justify-end">
+                <Button
+                  onClick={() => {
+                    showConfirmDialog(
+                      "تأكيد الحفظ",
+                      "هل تريد حفظ جميع التغييرات على بيانات المتجر؟",
+                      saveStoreData,
+                      "store",
+                    );
+                  }}
+                  disabled={isLoading}
+                  className="min-w-[150px]"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                      جاري الحفظ...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 ml-2" />
+                      حفظ البيانات الأساسية
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={loadMerchantData}
+                  disabled={isLoading}
+                >
+                  <RefreshCw className="h-4 w-4 ml-2" />
+                  تحديث البيانات
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Business Activities Tab */}
+        {subActiveTab === "business-activities" && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building className="h-5 w-5" />
+                الأنشطة التجارية
+              </CardTitle>
+              <CardDescription>
+                إدارة الأنشطة التجارية الرئيسية والفرعية للمتجر
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="main-activity">النشاط الرئيسي *</Label>
+                  <Input
+                    id="main-activity"
+                    value={storeData.businessActivities.mainActivity}
+                    onChange={(e) =>
+                      setStoreData({
+                        ...storeData,
+                        businessActivities: {
+                          ...storeData.businessActivities,
+                          mainActivity: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="مثال: تجارة إلكترونية"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="business-type">نوع النشاط التجاري</Label>
+                  <Select
+                    value={storeData.businessActivities.businessType}
+                    onValueChange={(value) =>
+                      setStoreData({
+                        ...storeData,
+                        businessActivities: {
+                          ...storeData.businessActivities,
+                          businessType: value,
+                        },
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر نوع النشاط" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {BUSINESS_TYPES.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="legal-structure">الهيكل القانوني</Label>
+                  <Select
+                    value={storeData.businessActivities.legalStructure}
+                    onValueChange={(value) =>
+                      setStoreData({
+                        ...storeData,
+                        businessActivities: {
+                          ...storeData.businessActivities,
+                          legalStructure: value,
+                        },
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر الهيكل القانوني" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LEGAL_STRUCTURES.map((structure) => (
+                        <SelectItem
+                          key={structure.value}
+                          value={structure.value}
+                        >
+                          {structure.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="registration-number">رقم التسجيل</Label>
+                  <Input
+                    id="registration-number"
+                    value={storeData.businessActivities.registrationNumber}
+                    onChange={(e) =>
+                      setStoreData({
+                        ...storeData,
+                        businessActivities: {
+                          ...storeData.businessActivities,
+                          registrationNumber: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="رقم التسجيل التجاري"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>الأنشطة الفرعية</Label>
+                    <p className="text-sm text-muted-foreground">
+                      قم بإضافة الأنشطة التجارية الفرعية
+                    </p>
+                  </div>
+                  <Badge variant="outline">
+                    {storeData.businessActivities.subActivities.length} نشاط
+                  </Badge>
+                </div>
+
+                <div className="flex gap-2">
+                  <Input
+                    value={newSubActivity}
+                    onChange={(e) => setNewSubActivity(e.target.value)}
+                    placeholder="أدخل نشاطاً فرعياً جديداً"
+                    onKeyPress={(e) =>
+                      e.key === "Enter" && handleAddSubActivity()
+                    }
+                  />
+                  <Button onClick={handleAddSubActivity}>إضافة</Button>
+                </div>
+
+                {storeData.businessActivities.subActivities.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {storeData.businessActivities.subActivities.map(
+                      (activity, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-3 bg-background rounded-lg border"
+                        >
+                          <div className="flex items-center gap-2">
+                            <BadgeCheck className="h-4 w-4 text-green-500" />
+                            <span>{activity}</span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveSubActivity(index)}
+                          >
+                            <X className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
+                      ),
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center p-6 border-2 border-dashed rounded-lg">
+                    <Package className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-muted-foreground">
+                      لا توجد أنشطة فرعية مضافة
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <Separator />
+
+              <div className="flex gap-4 justify-end">
+                <Button
+                  onClick={() => {
+                    showConfirmDialog(
+                      "تأكيد الحفظ",
+                      "هل تريد حفظ التغييرات على الأنشطة التجارية؟",
+                      saveBusinessActivities,
+                      "business",
+                    );
+                  }}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                      جاري الحفظ...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 ml-2" />
+                      حفظ الأنشطة التجارية
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Compliance Settings Tab */}
+        {subActiveTab === "compliance" && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                إعدادات الامتثال
+              </CardTitle>
+              <CardDescription>
+                تكوين نظام الامتثال والكشف التلقائي عن المخالفات
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 rounded-lg border">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <Target className="h-5 w-5 text-primary" />
+                      <Label>الكشف التلقائي عن المخالفات</Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      اكتشاف تلقائي للمنتجات غير المطابقة للأنشطة المسجلة
+                    </p>
+                  </div>
+                  <Switch
+                    checked={storeData.complianceSettings.autoDetection}
+                    onCheckedChange={(checked) =>
+                      setStoreData({
+                        ...storeData,
+                        complianceSettings: {
+                          ...storeData.complianceSettings,
+                          autoDetection: checked,
+                        },
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-4 rounded-lg border">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5 text-amber-500" />
+                      <Label>وضع الامتثال الصارم</Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      رفض تلقائي للمنتجات المخالفة مع إشعار فوري
+                    </p>
+                  </div>
+                  <Switch
+                    checked={storeData.complianceSettings.strictMode}
+                    onCheckedChange={(checked) =>
+                      setStoreData({
+                        ...storeData,
+                        complianceSettings: {
+                          ...storeData.complianceSettings,
+                          strictMode: checked,
+                        },
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-4 rounded-lg border">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <Bell className="h-5 w-5 text-blue-500" />
+                      <Label>إشعارات المخالفات</Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      إرسال إشعارات عند اكتشاف منتجات مخالفة
+                    </p>
+                  </div>
+                  <Switch
+                    checked={storeData.complianceSettings.notifyOnViolation}
+                    onCheckedChange={(checked) =>
+                      setStoreData({
+                        ...storeData,
+                        complianceSettings: {
+                          ...storeData.complianceSettings,
+                          notifyOnViolation: checked,
+                        },
+                      })
+                    }
+                  />
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>عتبة المراجعة (%)</Label>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={storeData.complianceSettings.reviewThreshold}
+                        onChange={(e) =>
+                          setStoreData({
+                            ...storeData,
+                            complianceSettings: {
+                              ...storeData.complianceSettings,
+                              reviewThreshold: parseInt(e.target.value) || 10,
+                            },
+                          })
+                        }
+                        className="w-32"
+                      />
+                      <div className="flex-1">
+                        <Progress
+                          value={storeData.complianceSettings.reviewThreshold}
+                          className="h-2"
+                        />
+                      </div>
+                      <Badge variant="outline">
+                        {storeData.complianceSettings.reviewThreshold}%
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      نسبة المنتجات التي تسبب مراجعة تلقائية للمتجر
+                    </p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="timezone">المنطقة الزمنية</Label>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>الانحرافات المسموحة</Label>
+                      <p className="text-sm text-muted-foreground">
+                        أنواع الانحرافات المسموح بها في المنتجات
+                      </p>
+                    </div>
                     <Select
-                      value={localStoreData.timezone}
-                      onValueChange={(value) =>
-                        setLocalStoreData({
-                          ...localStoreData,
-                          timezone: value,
-                        })
-                      }
+                      value={allowedDeviation}
+                      onValueChange={setAllowedDeviation}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="اختر المنطقة الزمنية" />
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="اختر نوع الانحراف" />
                       </SelectTrigger>
                       <SelectContent>
-                        {TIMEZONES.map((tz) => (
-                          <SelectItem key={tz.value} value={tz.value}>
-                            {tz.label}
+                        {DEVIATION_TYPES.map((deviation) => (
+                          <SelectItem
+                            key={deviation.value}
+                            value={deviation.value}
+                          >
+                            {deviation.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
 
-                <Separator />
-
-                <div className="flex gap-4 justify-end">
-                  <Button
-                    onClick={() => {
-                      showConfirmDialog(
-                        "تأكيد الحفظ",
-                        "هل تريد حفظ جميع التغييرات على بيانات المتجر؟",
-                        handleSaveFullStoreData,
-                        "store",
-                      );
-                    }}
-                    disabled={savingStoreSettings}
-                    className="min-w-[150px]"
-                  >
-                    {savingStoreSettings ? (
-                      <>
-                        <Loader2 className="h-4 w-4 ml-2 animate-spin" />
-                        جاري الحفظ...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4 ml-2" />
-                        حفظ البيانات الأساسية
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={loadMerchantData}
-                    disabled={loading}
-                  >
-                    <RefreshCw className="h-4 w-4 ml-2" />
-                    تحديث البيانات
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Design Tab */}
-          {subActiveTab === "design" && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Palette className="h-5 w-5" />
-                  تصميم المتجر
-                </CardTitle>
-                <CardDescription>
-                  تخصيص كامل لمظهر متجرك: الألوان، الخطوط، التخطيط، والمزيد
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="colors" className="w-full">
-                  <TabsList className="grid grid-cols-5 mb-6">
-                    {designTabs.map((tab) => {
-                      const Icon = tab.icon;
-                      return (
-                        <TabsTrigger
-                          key={tab.id}
-                          value={tab.id}
-                          className="flex flex-col items-center gap-1 h-auto py-3"
-                        >
-                          <Icon className="h-5 w-5" />
-                          <span className="text-xs">{tab.label}</span>
-                          <span className="text-xs text-muted-foreground hidden lg:block">
-                            {tab.description}
-                          </span>
-                        </TabsTrigger>
-                      );
-                    })}
-                  </TabsList>
-
-                  {/* Colors Tab */}
-                  <TabsContent value="colors" className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <h3 className="font-semibold flex items-center gap-2">
-                          <Droplets className="h-5 w-5" />
-                          الألوان الأساسية
-                        </h3>
-                        <div className="space-y-4">
-                          {[
-                            {
-                              id: "primary",
-                              label: "اللون الأساسي",
-                              value: designSettings.primaryColor,
-                              description: "لون الأزرار والنقرات الرئيسية",
-                            },
-                            {
-                              id: "secondary",
-                              label: "اللون الثانوي",
-                              value: designSettings.secondaryColor,
-                              description: "لون النقرات الثانوية",
-                            },
-                            {
-                              id: "background",
-                              label: "لون الخلفية",
-                              value:
-                                designSettings.backgroundColor || "#ffffff",
-                              description: "خلفية الصفحة الرئيسية",
-                            },
-                          ].map((color) => (
-                            <div key={color.id} className="space-y-2">
-                              <Label className="flex items-center justify-between">
-                                <span>{color.label}</span>
-                                <Badge
-                                  variant="outline"
-                                  className="font-mono text-xs"
-                                >
-                                  {color.value}
-                                </Badge>
-                              </Label>
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className="h-10 w-10 rounded-lg border shadow-sm cursor-pointer"
-                                  style={{ backgroundColor: color.value }}
-                                  onClick={() => {
-                                    const newColor = prompt(
-                                      `أدخل اللون ${color.label} (hex):`,
-                                      color.value,
-                                    );
-                                    if (
-                                      newColor &&
-                                      /^#[0-9A-F]{6}$/i.test(newColor)
-                                    ) {
-                                      setDesignSettings({
-                                        ...designSettings,
-                                        [color.id === "background"
-                                          ? "backgroundColor"
-                                          : `${color.id}Color`]: newColor,
-                                      });
-                                    }
-                                  }}
-                                />
-                                <Input
-                                  type="color"
-                                  value={color.value}
-                                  onChange={(e) =>
-                                    setDesignSettings({
-                                      ...designSettings,
-                                      [color.id === "background"
-                                        ? "backgroundColor"
-                                        : `${color.id}Color`]: e.target.value,
-                                    })
-                                  }
-                                  className="w-full h-10 cursor-pointer"
-                                />
-                              </div>
-                              <p className="text-xs text-muted-foreground">
-                                {color.description}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <h3 className="font-semibold flex items-center gap-2">
-                          <Type className="h-5 w-5" />
-                          ألوان النصوص
-                        </h3>
-                        <div className="space-y-4">
-                          {[
-                            {
-                              id: "text",
-                              label: "لون النص الرئيسي",
-                              value: designSettings.textColor || "#333333",
-                              description: "لون النصوص الرئيسية",
-                            },
-                            {
-                              id: "textSecondary",
-                              label: "لون النص الثانوي",
-                              value:
-                                designSettings.textSecondaryColor || "#666666",
-                              description: "لون النصوص الثانوية",
-                            },
-                            {
-                              id: "link",
-                              label: "لون الروابط",
-                              value: designSettings.linkColor || "#3b82f6",
-                              description: "لون الروابط والنصوص القابلة للنقر",
-                            },
-                          ].map((color) => (
-                            <div key={color.id} className="space-y-2">
-                              <Label className="flex items-center justify-between">
-                                <span>{color.label}</span>
-                                <Badge
-                                  variant="outline"
-                                  className="font-mono text-xs"
-                                >
-                                  {color.value}
-                                </Badge>
-                              </Label>
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className="h-10 w-10 rounded-lg border shadow-sm cursor-pointer"
-                                  style={{ backgroundColor: color.value }}
-                                  onClick={() => {
-                                    const newColor = prompt(
-                                      `أدخل اللون ${color.label} (hex):`,
-                                      color.value,
-                                    );
-                                    if (
-                                      newColor &&
-                                      /^#[0-9A-F]{6}$/i.test(newColor)
-                                    ) {
-                                      setDesignSettings({
-                                        ...designSettings,
-                                        [color.id === "textSecondary"
-                                          ? "textSecondaryColor"
-                                          : `${color.id}Color`]: newColor,
-                                      });
-                                    }
-                                  }}
-                                />
-                                <Input
-                                  type="color"
-                                  value={color.value}
-                                  onChange={(e) =>
-                                    setDesignSettings({
-                                      ...designSettings,
-                                      [color.id === "textSecondary"
-                                        ? "textSecondaryColor"
-                                        : `${color.id}Color`]: e.target.value,
-                                    })
-                                  }
-                                  className="w-full h-10 cursor-pointer"
-                                />
-                              </div>
-                              <p className="text-xs text-muted-foreground">
-                                {color.description}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </TabsContent>
-
-                  {/* Typography Tab */}
-                  <TabsContent value="typography" className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <h3 className="font-semibold flex items-center gap-2">
-                          <Type className="h-5 w-5" />
-                          أنواع الخطوط
-                        </h3>
-                        <div className="space-y-4">
-                          {[
-                            {
-                              id: "headingFont",
-                              label: "خط العناوين",
-                              value:
-                                designSettings.headingFont ||
-                                designSettings.fontFamily,
-                              description:
-                                "خط عناوين الصفحات والعناوين الرئيسية",
-                            },
-                            {
-                              id: "bodyFont",
-                              label: "خط النصوص",
-                              value:
-                                designSettings.bodyFont ||
-                                designSettings.fontFamily,
-                              description: "خط النصوص الرئيسية والمحتوى",
-                            },
-                            {
-                              id: "fontFamily",
-                              label: "خط الأزرار",
-                              value:
-                                designSettings.buttonFont ||
-                                designSettings.fontFamily,
-                              description: "خط الأزرار والعناصر التفاعلية",
-                            },
-                          ].map((font) => (
-                            <div key={font.id} className="space-y-2">
-                              <Label>{font.label}</Label>
-                              <Select
-                                value={font.value}
-                                onValueChange={(value) =>
-                                  setDesignSettings({
-                                    ...designSettings,
-                                    [font.id]: value,
-                                  })
-                                }
-                              >
-                                <SelectTrigger>
-                                  <SelectValue
-                                    placeholder={`اختر ${font.label}`}
-                                  />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {FONT_FAMILIES.map((f) => (
-                                    <SelectItem key={f.value} value={f.value}>
-                                      <div className="flex items-center gap-2">
-                                        <span>{f.label}</span>
-                                        <span className="text-xs text-muted-foreground">
-                                          ({f.value})
-                                        </span>
-                                      </div>
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <p className="text-xs text-muted-foreground">
-                                {font.description}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <h3 className="font-semibold flex items-center gap-2">
-                          <Maximize2 className="h-5 w-5" />
-                          أحجام الخطوط
-                        </h3>
-                        <div className="space-y-4">
-                          {[
-                            {
-                              id: "baseFontSize",
-                              label: "حجم النص الأساسي",
-                              value: designSettings.baseFontSize || "16px",
-                              description: "الحجم الأساسي للنصوص",
-                            },
-                            {
-                              id: "headingSize",
-                              label: "حجم العناوين الرئيسية",
-                              value: designSettings.headingSize || "2rem",
-                              description: "حجم العناوين الرئيسية (H1)",
-                            },
-                            {
-                              id: "lineHeight",
-                              label: "ارتفاع السطر",
-                              value: designSettings.lineHeight || "1.6",
-                              description: "المسافة بين أسطر النص",
-                            },
-                          ].map((size) => (
-                            <div key={size.id} className="space-y-2">
-                              <Label>{size.label}</Label>
-                              <Select
-                                value={size.value}
-                                onValueChange={(value) =>
-                                  setDesignSettings({
-                                    ...designSettings,
-                                    [size.id]: value,
-                                  })
-                                }
-                              >
-                                <SelectTrigger>
-                                  <SelectValue
-                                    placeholder={`اختر ${size.label}`}
-                                  />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {size.id === "baseFontSize" &&
-                                    FONT_SIZES.map((s) => (
-                                      <SelectItem key={s.value} value={s.value}>
-                                        {s.label} ({s.value})
-                                      </SelectItem>
-                                    ))}
-                                  {size.id === "headingSize" &&
-                                    [
-                                      { value: "1.5rem", label: "صغير" },
-                                      { value: "2rem", label: "متوسط" },
-                                      { value: "2.5rem", label: "كبير" },
-                                      { value: "3rem", label: "كبير جداً" },
-                                    ].map((s) => (
-                                      <SelectItem key={s.value} value={s.value}>
-                                        {s.label} ({s.value})
-                                      </SelectItem>
-                                    ))}
-                                  {size.id === "lineHeight" &&
-                                    [
-                                      { value: "1.2", label: "مضغوط" },
-                                      { value: "1.4", label: "عادي" },
-                                      { value: "1.6", label: "فسيح" },
-                                      { value: "1.8", label: "فسيح جداً" },
-                                    ].map((s) => (
-                                      <SelectItem key={s.value} value={s.value}>
-                                        {s.label} ({s.value})
-                                      </SelectItem>
-                                    ))}
-                                </SelectContent>
-                              </Select>
-                              <p className="text-xs text-muted-foreground">
-                                {size.description}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </TabsContent>
-
-                  {/* Layout Tab */}
-                  <TabsContent value="layout" className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <h3 className="font-semibold flex items-center gap-2">
-                          <Layout className="h-5 w-5" />
-                          عرض المحتوى
-                        </h3>
-                        <div className="space-y-4">
-                          {[
-                            {
-                              id: "containerWidth",
-                              label: "عرض الصفحة",
-                              value:
-                                designSettings.containerWidth || "container",
-                              description: "عرض محتوى الصفحة الرئيسي",
-                            },
-                            {
-                              id: "borderRadius",
-                              label: "شكل الزوايا",
-                              value: designSettings.borderRadius || "md",
-                              description: "نصف قطر الزوايا للعناصر",
-                            },
-                            {
-                              id: "spacing",
-                              label: "المسافات",
-                              value: designSettings.spacing || "normal",
-                              description: "المسافات بين العناصر",
-                            },
-                          ].map((layout) => (
-                            <div key={layout.id} className="space-y-2">
-                              <Label>{layout.label}</Label>
-                              <Select
-                                value={layout.value}
-                                onValueChange={(value) =>
-                                  setDesignSettings({
-                                    ...designSettings,
-                                    [layout.id]: value,
-                                  })
-                                }
-                              >
-                                <SelectTrigger>
-                                  <SelectValue
-                                    placeholder={`اختر ${layout.label}`}
-                                  />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {layout.id === "containerWidth" &&
-                                    CONTAINER_WIDTHS.map((opt) => (
-                                      <SelectItem
-                                        key={opt.value}
-                                        value={opt.value}
-                                      >
-                                        {opt.label}
-                                      </SelectItem>
-                                    ))}
-                                  {layout.id === "borderRadius" &&
-                                    BORDER_RADIUS_OPTIONS.map((opt) => (
-                                      <SelectItem
-                                        key={opt.value}
-                                        value={opt.value}
-                                      >
-                                        {opt.label}
-                                      </SelectItem>
-                                    ))}
-                                  {layout.id === "spacing" &&
-                                    SPACING_OPTIONS.map((opt) => (
-                                      <SelectItem
-                                        key={opt.value}
-                                        value={opt.value}
-                                      >
-                                        {opt.label}
-                                      </SelectItem>
-                                    ))}
-                                </SelectContent>
-                              </Select>
-                              <p className="text-xs text-muted-foreground">
-                                {layout.description}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <h3 className="font-semibold flex items-center gap-2">
-                          <Grid className="h-5 w-5" />
-                          تخطيط المنتجات
-                        </h3>
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <Label>عدد أعمدة المنتجات</Label>
-                            <div className="flex items-center gap-4">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  setDesignSettings({
-                                    ...designSettings,
-                                    productGridColumns: Math.max(
-                                      2,
-                                      (designSettings.productGridColumns || 4) -
-                                        1,
-                                    ),
-                                  })
-                                }
-                              >
-                                <Minus className="h-4 w-4" />
-                              </Button>
-                              <div className="text-center flex-1">
-                                <div className="text-2xl font-bold">
-                                  {designSettings.productGridColumns || 4}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  أعمدة
-                                </div>
-                              </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  setDesignSettings({
-                                    ...designSettings,
-                                    productGridColumns: Math.min(
-                                      6,
-                                      (designSettings.productGridColumns || 4) +
-                                        1,
-                                    ),
-                                  })
-                                }
-                              >
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-
-                          <div className="space-y-3">
-                            <Label>مكونات الواجهة</Label>
-                            {[
-                              {
-                                id: "showNavbar",
-                                label: "شريط التنقل العلوي",
-                                checked: designSettings.showNavbar ?? true,
-                                description: "إظهار شريط التنقل الرئيسي",
-                              },
-                              {
-                                id: "showFooter",
-                                label: "التذييل (Footer)",
-                                checked: designSettings.showFooter ?? true,
-                                description: "إظهار تذييل الصفحة",
-                              },
-                              {
-                                id: "showSidebar",
-                                label: "شريط الجانب",
-                                checked: designSettings.showSidebar ?? true,
-                                description: "إظهار شريط التنقل الجانبي",
-                              },
-                              {
-                                id: "showBackToTop",
-                                label: "زر العودة للأعلى",
-                                checked: designSettings.showBackToTop ?? true,
-                                description: "إظهار زر العودة للصفحة العلوية",
-                              },
-                            ].map((component) => (
-                              <div
-                                key={component.id}
-                                className="flex items-center justify-between p-3 rounded-lg border"
-                              >
-                                <div>
-                                  <div className="font-medium">
-                                    {component.label}
-                                  </div>
-                                  <div className="text-xs text-muted-foreground">
-                                    {component.description}
-                                  </div>
-                                </div>
-                                <Switch
-                                  checked={component.checked}
-                                  onCheckedChange={(checked) =>
-                                    setDesignSettings({
-                                      ...designSettings,
-                                      [component.id]: checked,
-                                    })
-                                  }
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </TabsContent>
-
-                  {/* Branding Tab */}
-                  <TabsContent value="branding" className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <h3 className="font-semibold flex items-center gap-2">
-                          <ImageIcon className="h-5 w-5" />
-                          شعار المتجر
-                        </h3>
-                        <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                          {designSettings.logo ? (
-                            <div className="space-y-4">
-                              <img
-                                src={designSettings.logo}
-                                alt="شعار المتجر"
-                                className="h-40 mx-auto object-contain rounded-lg"
-                              />
-                              <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() =>
-                                    showConfirmDialog(
-                                      "تأكيد الإزالة",
-                                      "هل تريد إزالة شعار المتجر؟",
-                                      () =>
-                                        setDesignSettings({
-                                          ...designSettings,
-                                          logo: "",
-                                        }),
-                                      "design",
-                                    )
-                                  }
-                                >
-                                  <XSquare className="h-4 w-4 ml-1" />
-                                  إزالة الشعار
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={openLogoFileInput}
-                                >
-                                  <Upload className="h-4 w-4 ml-1" />
-                                  تغيير الشعار
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() =>
-                                    window.open(designSettings.logo, "_blank")
-                                  }
-                                >
-                                  <ExternalLink className="h-4 w-4 ml-1" />
-                                  عرض كامل
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div
-                              className="space-y-4 cursor-pointer"
-                              onClick={openLogoFileInput}
-                            >
-                              <div className="h-40 w-40 mx-auto bg-muted rounded-lg flex items-center justify-center">
-                                <ImageIcon className="h-16 w-16 text-muted-foreground" />
-                              </div>
-                              <div className="space-y-2">
-                                <p className="text-sm text-muted-foreground">
-                                  انقر لتحميل شعار المتجر
-                                </p>
-                                <Button variant="outline">
-                                  <Upload className="h-4 w-4 ml-2" />
-                                  تحميل شعار
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        <div className="text-xs text-muted-foreground space-y-1">
-                          <div className="flex items-center gap-2">
-                            <CheckCircle className="h-3 w-3 text-green-500" />
-                            <span>الحجم المقترح: 400×400 بكسل</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <CheckCircle className="h-3 w-3 text-green-500" />
-                            <span>التنسيقات المدعومة: PNG, JPEG, SVG</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <CheckCircle className="h-3 w-3 text-green-500" />
-                            <span>الحجم الأقصى: 5 ميجابايت</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <h3 className="font-semibold flex items-center gap-2">
-                          <Globe className="h-5 w-5" />
-                          أيقونة المتجر (Favicon)
-                        </h3>
-                        <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                          {designSettings.favicon ? (
-                            <div className="space-y-4">
-                              <div className="flex items-center justify-center gap-6">
-                                <div className="text-center">
-                                  <div className="h-16 w-16 mx-auto mb-2 rounded-lg overflow-hidden border">
-                                    <img
-                                      src={designSettings.favicon}
-                                      alt="أيقونة المتجر"
-                                      className="h-full w-full object-cover"
-                                    />
-                                  </div>
-                                  <div className="text-xs">64×64</div>
-                                </div>
-                                <div className="text-center">
-                                  <div className="h-8 w-8 mx-auto mb-2 rounded overflow-hidden border">
-                                    <img
-                                      src={designSettings.favicon}
-                                      alt="أيقونة المتجر"
-                                      className="h-full w-full object-cover"
-                                    />
-                                  </div>
-                                  <div className="text-xs">32×32</div>
-                                </div>
-                              </div>
-                              <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() =>
-                                    showConfirmDialog(
-                                      "تأكيد الإزالة",
-                                      "هل تريد إزالة أيقونة المتجر؟",
-                                      () =>
-                                        setDesignSettings({
-                                          ...designSettings,
-                                          favicon: "",
-                                        }),
-                                      "design",
-                                    )
-                                  }
-                                >
-                                  <XSquare className="h-4 w-4 ml-1" />
-                                  إزالة الأيقونة
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={openFaviconFileInput}
-                                >
-                                  <Upload className="h-4 w-4 ml-1" />
-                                  تغيير الأيقونة
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div
-                              className="space-y-4 cursor-pointer"
-                              onClick={openFaviconFileInput}
-                            >
-                              <div className="h-16 w-16 mx-auto bg-muted rounded-lg flex items-center justify-center">
-                                <Globe className="h-8 w-8 text-muted-foreground" />
-                              </div>
-                              <div className="space-y-2">
-                                <p className="text-sm text-muted-foreground">
-                                  أيقونة تظهر في متصفح العميل
-                                </p>
-                                <Button variant="outline">
-                                  <Upload className="h-4 w-4 ml-2" />
-                                  تحميل أيقونة
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        <div className="text-xs text-muted-foreground space-y-1">
-                          <div className="flex items-center gap-2">
-                            <CheckCircle className="h-3 w-3 text-green-500" />
-                            <span>الحجم المقترح: 32×32 أو 64×64 بكسل</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <CheckCircle className="h-3 w-3 text-green-500" />
-                            <span>التنسيقات المدعومة: ICO, PNG</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <CheckCircle className="h-3 w-3 text-green-500" />
-                            <span>الحجم الأقصى: 1 ميجابايت</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    <div className="space-y-4">
-                      <h3 className="font-semibold flex items-center gap-2">
-                        <Scissors className="h-5 w-5" />
-                        تحسين الصور
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {[
-                          {
-                            id: "lazyLoadImages",
-                            label: "التحميل البطيء للصور",
-                            checked: designSettings.lazyLoadImages ?? true,
-                            description: "تحميل الصور عند ظهورها فقط",
-                            icon: Loader2,
-                          },
-                          {
-                            id: "compressImages",
-                            label: "ضغط الصور",
-                            checked: designSettings.compressImages ?? true,
-                            description: "تقليل حجم الصور تلقائياً",
-                            icon: Minimize2,
-                          },
-                          {
-                            id: "useWebP",
-                            label: "استخدام WebP",
-                            checked: designSettings.useWebP ?? true,
-                            description: "استخدام تنسيق WebP الحديث",
-                            icon: ImageIcon,
-                          },
-                        ].map((setting) => {
-                          const Icon = setting.icon;
-                          return (
-                            <div
-                              key={setting.id}
-                              className="p-4 rounded-lg border flex items-center justify-between"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="p-2 rounded-lg bg-primary/10">
-                                  <Icon className="h-5 w-5 text-primary" />
-                                </div>
-                                <div>
-                                  <div className="font-medium">
-                                    {setting.label}
-                                  </div>
-                                  <div className="text-xs text-muted-foreground">
-                                    {setting.description}
-                                  </div>
-                                </div>
-                              </div>
-                              <Switch
-                                checked={setting.checked}
-                                onCheckedChange={(checked) =>
-                                  setDesignSettings({
-                                    ...designSettings,
-                                    [setting.id]: checked,
-                                  })
-                                }
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </TabsContent>
-
-                  {/* Templates Tab */}
-                  <TabsContent value="templates" className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {enhancedStoreTemplates.slice(0, 6).map((template) => (
-                        <Card
-                          key={template.id}
-                          className={`cursor-pointer transition-all hover:shadow-lg ${
-                            designSettings.theme === template.id
-                              ? "ring-2 ring-primary"
-                              : ""
-                          }`}
-                          onClick={() => applyTemplate(template.id)}
-                        >
-                          <CardContent className="p-0">
-                            <div className="relative">
-                              <div
-                                className="h-40 rounded-t-lg flex flex-col items-center justify-center p-4"
-                                style={{
-                                  background: `linear-gradient(135deg, ${template.customization.colors.primary}20, ${template.customization.colors.secondary}20)`,
-                                }}
-                              >
-                                <div className="text-center">
-                                  <div
-                                    className="h-12 w-12 mx-auto mb-3 rounded-full flex items-center justify-center"
-                                    style={{
-                                      backgroundColor:
-                                        template.customization.colors.primary,
-                                      color: "white",
-                                    }}
-                                  >
-                                    <Layout className="h-6 w-6" />
-                                  </div>
-                                  <h3 className="font-semibold mb-1">
-                                    {template.name.ar}
-                                  </h3>
-                                  <p className="text-xs text-muted-foreground">
-                                    {template.category}
-                                  </p>
-                                </div>
-                              </div>
-                              {designSettings.theme === template.id && (
-                                <div className="absolute top-2 right-2 bg-primary text-white px-2 py-1 rounded-full text-xs">
-                                  ✓ مفعل
-                                </div>
-                              )}
-                              {template.isPremium ? (
-                                <div className="absolute top-2 left-2 bg-amber-100 text-amber-800 px-2 py-1 rounded-full text-xs">
-                                  💎 متقدم
-                                </div>
-                              ) : (
-                                <div className="absolute top-2 left-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
-                                  مجاني
-                                </div>
-                              )}
-                            </div>
-                            <div className="p-4">
-                              <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                                {template.description.ar}
-                              </p>
-                              <div className="flex flex-wrap gap-1 mb-3">
-                                {template.features
-                                  .slice(0, 3)
-                                  .map((feature) => (
-                                    <Badge
-                                      key={feature}
-                                      variant="outline"
-                                      className="text-xs"
-                                    >
-                                      {feature}
-                                    </Badge>
-                                  ))}
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <Button
-                                  variant={
-                                    designSettings.theme === template.id
-                                      ? "default"
-                                      : "outline"
-                                  }
-                                  size="sm"
-                                >
-                                  {designSettings.theme === template.id
-                                    ? "مفعل"
-                                    : "تطبيق"}
-                                </Button>
-                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                  <Users className="h-3 w-3" />
-                                  <span>{template.difficulty}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </TabsContent>
-                </Tabs>
-
-                <Separator className="my-6" />
-
-                <div className="flex flex-col sm:flex-row gap-4 justify-between">
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={handleResetDesign}
-                      className="flex items-center gap-2"
-                    >
-                      <RefreshCw className="h-4 w-4" />
-                      إعادة تعيين التصميم
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        const dataStr = JSON.stringify(designSettings, null, 2);
-                        const dataUri =
-                          "data:application/json;charset=utf-8," +
-                          encodeURIComponent(dataStr);
-                        const linkElement = document.createElement("a");
-                        linkElement.setAttribute("href", dataUri);
-                        linkElement.setAttribute(
-                          "download",
-                          `design-settings-${store.name}.json`,
-                        );
-                        linkElement.click();
-                        toast.success("✅ تم تصدير إعدادات التصميم");
-                      }}
-                      className="flex items-center gap-2"
-                    >
-                      <Download className="h-4 w-4" />
-                      تصدير الإعدادات
-                    </Button>
+                  <div className="flex gap-2">
+                    <Input
+                      value={allowedDeviation}
+                      onChange={(e) => setAllowedDeviation(e.target.value)}
+                      placeholder="أو أدخل انحرافاً مخصصاً"
+                    />
+                    <Button onClick={handleAddAllowedDeviation}>إضافة</Button>
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <Button
-                      variant="outline"
-                      onClick={() =>
-                        window.open(`/preview/${store.id}`, "_blank")
-                      }
-                      className="flex items-center gap-2"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                      معاينة كاملة
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        showConfirmDialog(
-                          "تأكيد الحفظ",
-                          "هل تريد حفظ جميع تغييرات التصميم؟",
-                          handleSaveDesignSettings,
-                          "design",
-                        );
-                      }}
-                      disabled={savingDesignSettings}
-                      className="min-w-[150px] flex items-center gap-2"
-                    >
-                      {savingDesignSettings ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          جاري الحفظ...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="h-4 w-4" />
-                          حفظ التصميم
-                        </>
+
+                  {storeData.complianceSettings.allowedDeviations.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {storeData.complianceSettings.allowedDeviations.map(
+                        (deviation, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-3 bg-background rounded-lg border"
+                          >
+                            <div className="flex items-center gap-2">
+                              <CheckCircle className="h-4 w-4 text-green-500" />
+                              <span className="text-sm">{deviation}</span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                handleRemoveAllowedDeviation(index)
+                              }
+                            >
+                              <X className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </div>
+                        ),
                       )}
-                    </Button>
+                    </div>
+                  ) : (
+                    <div className="text-center p-4 border-2 border-dashed rounded-lg">
+                      <p className="text-muted-foreground">
+                        لا توجد انحرافات مسموحة
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="flex gap-4 justify-end">
+                <Button
+                  onClick={() => {
+                    showConfirmDialog(
+                      "تأكيد الحفظ",
+                      "هل تريد حفظ التغييرات على إعدادات الامتثال؟",
+                      saveComplianceSettings,
+                      "compliance",
+                    );
+                  }}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                      جاري الحفظ...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 ml-2" />
+                      حفظ إعدادات الامتثال
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Contact Info Tab */}
+        {subActiveTab === "contact-info" && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                معلومات الاتصال
+              </CardTitle>
+              <CardDescription>
+                المعلومات التي يستخدمها العملاء للتواصل مع متجرك
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="contact-email">البريد الإلكتروني *</Label>
+                  <Input
+                    id="contact-email"
+                    type="email"
+                    value={storeData.contact.email}
+                    onChange={(e) =>
+                      setStoreData({
+                        ...storeData,
+                        contact: {
+                          ...storeData.contact,
+                          email: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="email@example.com"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="contact-phone">رقم الهاتف *</Label>
+                  <Input
+                    id="contact-phone"
+                    value={storeData.contact.phone}
+                    onChange={(e) =>
+                      setStoreData({
+                        ...storeData,
+                        contact: {
+                          ...storeData.contact,
+                          phone: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="+967 7X XXX XXXX"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="address">العنوان الكامل *</Label>
+                <Textarea
+                  id="address"
+                  className="min-h-[80px]"
+                  value={storeData.contact.address}
+                  onChange={(e) =>
+                    setStoreData({
+                      ...storeData,
+                      contact: {
+                        ...storeData.contact,
+                        address: e.target.value,
+                      },
+                    })
+                  }
+                  placeholder="الشارع، الحي، المنطقة"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="city">المدينة *</Label>
+                  <Input
+                    id="city"
+                    value={storeData.contact.city}
+                    onChange={(e) =>
+                      setStoreData({
+                        ...storeData,
+                        contact: {
+                          ...storeData.contact,
+                          city: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="المدينة"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="governorate">المحافظة *</Label>
+                  <Select
+                    value={storeData.contact.governorate}
+                    onValueChange={(value) =>
+                      setStoreData({
+                        ...storeData,
+                        contact: {
+                          ...storeData.contact,
+                          governorate: value,
+                        },
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر المحافظة" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {YEMENI_GOVERNORATES.map((gov) => (
+                        <SelectItem key={gov} value={gov}>
+                          {gov}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="country">البلد</Label>
+                  <Input
+                    id="country"
+                    value={storeData.contact.country}
+                    onChange={(e) =>
+                      setStoreData({
+                        ...storeData,
+                        contact: {
+                          ...storeData.contact,
+                          country: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="البلد"
+                    disabled
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="zip-code">الرمز البريدي</Label>
+                  <Input
+                    id="zip-code"
+                    value={storeData.contact.zipCode}
+                    onChange={(e) =>
+                      setStoreData({
+                        ...storeData,
+                        contact: {
+                          ...storeData.contact,
+                          zipCode: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="الرمز البريدي"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-4 justify-end">
+                <Button
+                  onClick={() => {
+                    showConfirmDialog(
+                      "تأكيد الحفظ",
+                      "هل تريد حفظ التغييرات على معلومات الاتصال؟",
+                      saveContactInfo,
+                      "contact",
+                    );
+                  }}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                      جاري الحفظ...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 ml-2" />
+                      حفظ معلومات الاتصال
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Design Tab */}
+        {subActiveTab === "design" && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Palette className="h-5 w-5" />
+                تصميم المتجر
+              </CardTitle>
+              <CardDescription>
+                تخصيص مظهر متجرك: الألوان، الخطوط، التخطيط
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="font-semibold">الألوان</h3>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>اللون الأساسي</Label>
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="h-10 w-10 rounded-lg border"
+                          style={{
+                            backgroundColor: designSettings.primaryColor,
+                          }}
+                        />
+                        <Select
+                          value={designSettings.primaryColor}
+                          onValueChange={(value) =>
+                            setDesignSettings({
+                              ...designSettings,
+                              primaryColor: value,
+                            })
+                          }
+                        >
+                          <SelectTrigger className="flex-1">
+                            <SelectValue placeholder="اختر اللون الأساسي" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {COLORS.map((color) => (
+                              <SelectItem key={color.value} value={color.value}>
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className="h-4 w-4 rounded"
+                                    style={{ backgroundColor: color.value }}
+                                  />
+                                  {color.label}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>اللون الثانوي</Label>
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="h-10 w-10 rounded-lg border"
+                          style={{
+                            backgroundColor: designSettings.secondaryColor,
+                          }}
+                        />
+                        <Select
+                          value={designSettings.secondaryColor}
+                          onValueChange={(value) =>
+                            setDesignSettings({
+                              ...designSettings,
+                              secondaryColor: value,
+                            })
+                          }
+                        >
+                          <SelectTrigger className="flex-1">
+                            <SelectValue placeholder="اختر اللون الثانوي" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {COLORS.map((color) => (
+                              <SelectItem key={color.value} value={color.value}>
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className="h-4 w-4 rounded"
+                                    style={{ backgroundColor: color.value }}
+                                  />
+                                  {color.label}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          )}
 
-          {/* Other tabs content would go here... */}
-          {/* Due to length constraints, I've implemented the most important tabs */}
-          {/* You can continue adding other tabs following the same pattern */}
-        </div>
+                <div className="space-y-4">
+                  <h3 className="font-semibold">الخطوط</h3>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>خط العناوين</Label>
+                      <Select
+                        value={designSettings.headingFont}
+                        onValueChange={(value) =>
+                          setDesignSettings({
+                            ...designSettings,
+                            headingFont: value,
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر خط العناوين" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {FONT_FAMILIES.map((font) => (
+                            <SelectItem key={font.value} value={font.value}>
+                              {font.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-        {/* Preview Panel */}
-        <div className="lg:col-span-1">
-          <PreviewComponent />
-        </div>
-      </div>
+                    <div className="space-y-2">
+                      <Label>خط النصوص</Label>
+                      <Select
+                        value={designSettings.bodyFont}
+                        onValueChange={(value) =>
+                          setDesignSettings({
+                            ...designSettings,
+                            bodyFont: value,
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر خط النصوص" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {FONT_FAMILIES.map((font) => (
+                            <SelectItem key={font.value} value={font.value}>
+                              {font.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-      {/* Bottom Actions Bar */}
-      <div className="sticky bottom-0 bg-background border-t p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-        <div className="text-sm text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            <span>
-              آخر تحديث:{" "}
-              {store.updatedAt
-                ? new Date(store.updatedAt).toLocaleString("ar-SA")
-                : "غير معروف"}
-            </span>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => copyToClipboard(store.id)}
-            className="flex items-center gap-2"
-          >
-            <Copy className="h-4 w-4" />
-            نسخ معرف المتجر
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => copyToClipboard(getStoreUrl())}
-            className="flex items-center gap-2"
-          >
-            <LinkIcon className="h-4 w-4" />
-            نسخ رابط المتجر
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.open(getStoreUrl(), "_blank")}
-            className="flex items-center gap-2"
-          >
-            <ExternalLink className="h-4 w-4" />
-            زيارة المتجر
-          </Button>
-        </div>
+              <div className="space-y-4">
+                <h3 className="font-semibold">التخطيط</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>عدد أعمدة المنتجات</Label>
+                    <div className="flex items-center gap-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setDesignSettings({
+                            ...designSettings,
+                            productGridColumns: Math.max(
+                              2,
+                              designSettings.productGridColumns - 1,
+                            ),
+                          })
+                        }
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <div className="text-center flex-1">
+                        <div className="text-2xl font-bold">
+                          {designSettings.productGridColumns}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          أعمدة
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setDesignSettings({
+                            ...designSettings,
+                            productGridColumns: Math.min(
+                              6,
+                              designSettings.productGridColumns + 1,
+                            ),
+                          })
+                        }
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="flex gap-4 justify-end">
+                <Button
+                  onClick={() => {
+                    showConfirmDialog(
+                      "تأكيد الحفظ",
+                      "هل تريد حفظ إعدادات التصميم؟",
+                      saveDesignSettings,
+                      "design",
+                    );
+                  }}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                      جاري الحفظ...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 ml-2" />
+                      حفظ التصميم
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Shipping Settings Tab */}
+        {subActiveTab === "shipping" && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Truck className="h-5 w-5" />
+                إعدادات الشحن
+              </CardTitle>
+              <CardDescription>
+                تكوين إعدادات الشحن والتوصيل للمنتجات
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 rounded-lg border">
+                  <div className="space-y-0.5">
+                    <Label>تفعيل نظام الشحن</Label>
+                    <p className="text-sm text-muted-foreground">
+                      السماح بإضافة تكاليف الشحن للطلبات
+                    </p>
+                  </div>
+                  <Switch
+                    checked={storeData.shipping.enabled}
+                    onCheckedChange={(checked) =>
+                      setStoreData({
+                        ...storeData,
+                        shipping: {
+                          ...storeData.shipping,
+                          enabled: checked,
+                        },
+                      })
+                    }
+                  />
+                </div>
+
+                {storeData.shipping.enabled && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="shipping-cost">
+                          تكلفة الشحن الأساسية
+                        </Label>
+                        <Input
+                          id="shipping-cost"
+                          type="number"
+                          value={storeData.shipping.shippingCost}
+                          onChange={(e) =>
+                            setStoreData({
+                              ...storeData,
+                              shipping: {
+                                ...storeData.shipping,
+                                shippingCost: parseFloat(e.target.value) || 0,
+                              },
+                            })
+                          }
+                          placeholder="0"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          التكلفة الأساسية للشحن
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="free-threshold">حد الشحن المجاني</Label>
+                        <Input
+                          id="free-threshold"
+                          type="number"
+                          value={storeData.shipping.freeShippingThreshold}
+                          onChange={(e) =>
+                            setStoreData({
+                              ...storeData,
+                              shipping: {
+                                ...storeData.shipping,
+                                freeShippingThreshold:
+                                  parseFloat(e.target.value) || 0,
+                              },
+                            })
+                          }
+                          placeholder="0"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          الحد الأدنى للطلب للحصول على شحن مجاني
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <Separator />
+
+              <div className="flex gap-4 justify-end">
+                <Button
+                  onClick={() => {
+                    showConfirmDialog(
+                      "تأكيد الحفظ",
+                      "هل تريد حفظ إعدادات الشحن؟",
+                      async () => {
+                        await saveStoreSettings();
+                      },
+                      "shipping",
+                    );
+                  }}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                      جاري الحفظ...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 ml-2" />
+                      حفظ إعدادات الشحن
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Payment Settings Tab */}
+        {subActiveTab === "payment" && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                إعدادات الدفع
+              </CardTitle>
+              <CardDescription>
+                تكوين طرق الدفع المتاحة في متجرك
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="font-semibold">طرق الدفع المتاحة</h3>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 rounded-lg border">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-green-100">
+                        <Package className="h-5 w-5 text-green-600" />
+                      </div>
+                      <div>
+                        <Label>الدفع عند الاستلام</Label>
+                        <p className="text-sm text-muted-foreground">
+                          الدفع عند استلام الطلب
+                        </p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={storeData.payment.cashOnDelivery}
+                      onCheckedChange={(checked) =>
+                        setStoreData({
+                          ...storeData,
+                          payment: {
+                            ...storeData.payment,
+                            cashOnDelivery: checked,
+                          },
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 rounded-lg border">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-blue-100">
+                        <BanknoteIcon className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <Label>التحويل البنكي</Label>
+                        <p className="text-sm text-muted-foreground">
+                          الدفع عبر التحويل البنكي
+                        </p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={storeData.payment.bankTransfer}
+                      onCheckedChange={(checked) =>
+                        setStoreData({
+                          ...storeData,
+                          payment: {
+                            ...storeData.payment,
+                            bankTransfer: checked,
+                          },
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 rounded-lg border">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-purple-100">
+                        <SmartphoneIcon className="h-5 w-5 text-purple-600" />
+                      </div>
+                      <div>
+                        <Label>المحفظة الإلكترونية</Label>
+                        <p className="text-sm text-muted-foreground">
+                          الدفع عبر المحافظ الإلكترونية
+                        </p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={storeData.payment.mobileWallet}
+                      onCheckedChange={(checked) =>
+                        setStoreData({
+                          ...storeData,
+                          payment: {
+                            ...storeData.payment,
+                            mobileWallet: checked,
+                          },
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {storeData.payment.bankTransfer && (
+                <div className="space-y-4">
+                  <h3 className="font-semibold">معلومات الحساب البنكي</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="bank-name">اسم البنك</Label>
+                      <Input
+                        id="bank-name"
+                        value={storeData.payment.bankInfo.bankName}
+                        onChange={(e) =>
+                          setStoreData({
+                            ...storeData,
+                            payment: {
+                              ...storeData.payment,
+                              bankInfo: {
+                                ...storeData.payment.bankInfo,
+                                bankName: e.target.value,
+                              },
+                            },
+                          })
+                        }
+                        placeholder="اسم البنك"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="account-number">رقم الحساب</Label>
+                      <Input
+                        id="account-number"
+                        value={storeData.payment.bankInfo.accountNumber}
+                        onChange={(e) =>
+                          setStoreData({
+                            ...storeData,
+                            payment: {
+                              ...storeData.payment,
+                              bankInfo: {
+                                ...storeData.payment.bankInfo,
+                                accountNumber: e.target.value,
+                              },
+                            },
+                          })
+                        }
+                        placeholder="رقم الحساب"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="account-name">اسم صاحب الحساب</Label>
+                      <Input
+                        id="account-name"
+                        value={storeData.payment.bankInfo.accountName}
+                        onChange={(e) =>
+                          setStoreData({
+                            ...storeData,
+                            payment: {
+                              ...storeData.payment,
+                              bankInfo: {
+                                ...storeData.payment.bankInfo,
+                                accountName: e.target.value,
+                              },
+                            },
+                          })
+                        }
+                        placeholder="اسم صاحب الحساب"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <Separator />
+
+              <div className="flex gap-4 justify-end">
+                <Button
+                  onClick={() => {
+                    showConfirmDialog(
+                      "تأكيد الحفظ",
+                      "هل تريد حفظ إعدادات الدفع؟",
+                      async () => {
+                        await saveStoreSettings();
+                      },
+                      "payment",
+                    );
+                  }}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                      جاري الحفظ...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 ml-2" />
+                      حفظ إعدادات الدفع
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Taxes Settings Tab */}
+        {subActiveTab === "taxes" && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Receipt className="h-5 w-5" />
+                إعدادات الضرائب
+              </CardTitle>
+              <CardDescription>تكوين إعدادات الضرائب والرسوم</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 rounded-lg border">
+                  <div className="space-y-0.5">
+                    <Label>تفعيل نظام الضرائب</Label>
+                    <p className="text-sm text-muted-foreground">
+                      إضافة ضريبة على أسعار المنتجات
+                    </p>
+                  </div>
+                  <Switch
+                    checked={storeData.taxes.enabled}
+                    onCheckedChange={(checked) =>
+                      setStoreData({
+                        ...storeData,
+                        taxes: {
+                          ...storeData.taxes,
+                          enabled: checked,
+                        },
+                      })
+                    }
+                  />
+                </div>
+
+                {storeData.taxes.enabled && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="tax-rate">نسبة الضريبة (%)</Label>
+                        <Input
+                          id="tax-rate"
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={storeData.taxes.rate}
+                          onChange={(e) =>
+                            setStoreData({
+                              ...storeData,
+                              taxes: {
+                                ...storeData.taxes,
+                                rate: parseFloat(e.target.value) || 0,
+                              },
+                            })
+                          }
+                          placeholder="0"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>إدراج الضريبة في السعر</Label>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Switch
+                            checked={storeData.taxes.includeInPrice}
+                            onCheckedChange={(checked) =>
+                              setStoreData({
+                                ...storeData,
+                                taxes: {
+                                  ...storeData.taxes,
+                                  includeInPrice: checked,
+                                },
+                              })
+                            }
+                          />
+                          <span className="text-sm text-muted-foreground">
+                            إظهار السعر شامل الضريبة
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-3 bg-blue-50 rounded-lg">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Info className="h-4 w-4 text-blue-500" />
+                        <span>
+                          مثال: سعر المنتج 100 {storeData.currency} + ضريبة{" "}
+                          {storeData.taxes.rate}% ={" "}
+                          {storeData.taxes.includeInPrice
+                            ? `100 ${storeData.currency} (شامل الضريبة)`
+                            : `${100 + (100 * storeData.taxes.rate) / 100} ${storeData.currency}`}
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <Separator />
+
+              <div className="flex gap-4 justify-end">
+                <Button
+                  onClick={() => {
+                    showConfirmDialog(
+                      "تأكيد الحفظ",
+                      "هل تريد حفظ إعدادات الضرائب؟",
+                      async () => {
+                        await saveStoreSettings();
+                      },
+                      "taxes",
+                    );
+                  }}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                      جاري الحفظ...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 ml-2" />
+                      حفظ إعدادات الضرائب
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

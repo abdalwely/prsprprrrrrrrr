@@ -1,14 +1,17 @@
-import { useEffect } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { Loader2 } from 'lucide-react';
+import { useEffect } from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/lib/contexts/AuthContext";
+import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: ('admin' | 'merchant' | 'customer')[];
+  allowedRoles?: ("admin" | "merchant" | "customer" | "pending_merchant")[];
 }
 
-export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+export default function ProtectedRoute({
+  children,
+  allowedRoles,
+}: ProtectedRouteProps) {
   const { currentUser, userData, loading } = useAuth();
   const location = useLocation();
 

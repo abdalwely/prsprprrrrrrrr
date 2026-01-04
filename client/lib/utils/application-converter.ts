@@ -9,8 +9,8 @@ import {
   MerchantData,
   StoreConfig,
 } from "@/lib/types/unified-types";
-import { storeService, Store } from "@/lib/firestore";
-import { StoreCustomization } from "../types/store";
+import { Store, storeService } from "../src";
+import { StoreCustomization } from "../src/types";
 
 // ============================================
 // 🛠️ الثوابت والقيم الافتراضية

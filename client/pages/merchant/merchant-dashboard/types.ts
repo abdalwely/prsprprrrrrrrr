@@ -1,13 +1,11 @@
 import {
   Store,
   Product,
-  Order,
   Category,
   Customer,
   ShippingZone,
   ShippingMethod,
-  ShippingAddress,
-} from "@/lib/firestore";
+} from "@/lib/src";
 import { Dispatch, SetStateAction } from "react";
 import { NavigateFunction } from "react-router-dom";
 
@@ -308,4 +306,93 @@ export interface DesignTabProps {
   savingStoreSettings: boolean;
   savingDesignSettings: boolean;
   loading: boolean;
+}
+
+export interface DetailedStats {
+  // المبيعات
+  sales: {
+    daily: number;
+    weekly: number;
+    monthly: number;
+    yearly: number;
+    averageOrderValue: number;
+    conversionRate: number;
+    refundRate: number;
+  };
+
+  // الطلبات
+  orders: {
+    total: number;
+    pending: number;
+    processing: number;
+    shipped: number;
+    delivered: number;
+    cancelled: number;
+    returned: number;
+    averageProcessingTime: string; // بالأيام
+  };
+
+  // المنتجات
+  products: {
+    total: number;
+    active: number;
+    outOfStock: number;
+    lowStock: number;
+    categories: number;
+    averagePrice: number;
+    inventoryValue: number;
+  };
+
+  // العملاء
+  customers: {
+    total: number;
+    newThisMonth: number;
+    active: number;
+    repeatCustomers: number;
+    averageLifetimeValue: number;
+    retentionRate: number;
+  };
+
+  // المخزون
+  inventory: {
+    totalValue: number;
+    turnoverRate: number;
+    stockoutRate: number;
+    bestSellers: Array<{
+      id: string;
+      name: string;
+      category: string;
+      sold: number;
+      revenue: number;
+      stock: number;
+    }>;
+  };
+
+  // الأداء
+  performance: {
+    storeTraffic: number;
+    bounceRate: number;
+    averageSessionDuration: string;
+    pageViews: number;
+    mobileVsDesktop: {
+      mobile: number;
+      desktop: number;
+    };
+  };
+
+  // التحليلات الزمنية
+  timeAnalysis: {
+    revenueByMonth: Array<{ month: string; revenue: number }>;
+    ordersByDay: Array<{ day: string; orders: number }>;
+    peakHours: Array<{ hour: string; orders: number }>;
+  };
+
+  // الفئات
+  categories: Array<{
+    name: string;
+    revenue: number;
+    orders: number;
+    products: number;
+    growth: number;
+  }>;
 }

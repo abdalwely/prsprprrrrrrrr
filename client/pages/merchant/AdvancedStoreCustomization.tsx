@@ -16,7 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/lib/contexts/AuthContext";
 
 import { getStoreByOwnerId, updateStore, Store } from "@/lib/store-management";
 import {

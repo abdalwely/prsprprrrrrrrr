@@ -1,12 +1,7 @@
 // ============ complianceService.ts المحدث ============
 
-import { storeService, productService, orderService } from "./firestore";
-import {
-  Store,
-  Product,
-  ProductType,
-  DEFAULT_PRODUCT_TYPES,
-} from "./firestore";
+import { storeService, productService, orderService } from "./src";
+import { Store, Product, ProductType, DEFAULT_PRODUCT_TYPES } from "./src";
 
 // 🔥 واجهات النظام الجديد
 export interface ChecklistItems {

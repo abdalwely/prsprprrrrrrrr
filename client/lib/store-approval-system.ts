@@ -1573,8 +1573,8 @@
 //   return storeData;
 // };
 
-import { Store, storeService } from "./firestore";
 import { complianceService } from "./complianceService";
+import { storeService } from "./src/services/store/store.service";
 
 export interface StoreApplicationResult {
   storeId: string;

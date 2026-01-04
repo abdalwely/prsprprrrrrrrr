@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -44,8 +43,8 @@ import {
   Save,
 } from "lucide-react";
 import { Loader2 } from "lucide-react";
-import { ChecklistItems, ExtendedStore } from "../types";
-import { ShippingSettings, PaymentSettings } from "../types";
+import { ExtendedStore } from "@/lib/src";
+import { ChecklistItems, PaymentSettings, ShippingSettings } from "../types";
 
 interface SettingsTabProps {
   store: ExtendedStore;

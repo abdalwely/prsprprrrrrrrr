@@ -15,10 +15,10 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, Heart, ShoppingCart, Search, X } from "lucide-react";
-import { favoritesService, productService } from "@/lib/firestore";
 import { getCurrentCustomer } from "@/lib/customer-auth";
 import { getCurrentStoreId } from "@/lib/firebase";
-import { Favorite, Product } from "@/lib/types"; // ✅ الآن متطابق
+import { Favorite, Product } from "@/lib/src"; // ✅ الآن متطابق
+import { favoritesService, productService } from "@/lib/src";
 
 const Favorites: React.FC = () => {
   const navigate = useNavigate();
@@ -292,7 +292,7 @@ const Favorites: React.FC = () => {
 
               // ✅ الحصول على الكمية بشكل صحيح
               const quantity = product.inventory?.quantity || 0;
-              const isActive = product.status === "published" && quantity > 0;
+              const isActive = product.status && quantity > 0;
 
               // ✅ حساب السعر مع الخصم إن وجد
               const finalPrice =

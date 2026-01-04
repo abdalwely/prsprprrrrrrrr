@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/lib/contexts/AuthContext";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,7 @@ import {
   type Category,
   type CartItem as FirestoreCartItem,
   Order,
-} from "@/lib/firestore";
+} from "@/lib/src";
 import {
   Search,
   ShoppingCart,

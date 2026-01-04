@@ -21,8 +21,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
-import { storeService } from "@/lib/firestore";
+import { useAuth } from "@/lib/contexts/AuthContext";
+import { storeService } from "@/lib/src";
 import {
   storeTemplates,
   getTemplateById,

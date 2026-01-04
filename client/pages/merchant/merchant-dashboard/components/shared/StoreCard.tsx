@@ -1,98 +1,100 @@
+// components/shared/StatsCard.tsx
 import React from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  StoreIcon,
-  TrendingUp,
-  Users,
-  Package,
-  DollarSign,
-  Edit,
-  ExternalLink,
-  ShoppingCart,
-} from "lucide-react";
-import { ExtendedStore } from "../../types";
+import { Card, CardContent } from "@/components/ui/card";
+import { LucideIcon } from "lucide-react";
 
-interface StoreCardProps {
-  store: ExtendedStore;
-  stats?: {
-    totalOrders: number;
-    totalProducts: number;
-    activeCustomers: number;
-    totalRevenue: number;
-  };
-  onVisit?: () => void;
-  onEdit?: () => void;
+interface StatsCardProps {
+  title: string;
+  value: string;
+  icon: LucideIcon;
+  change?: string;
+  trend?: "up" | "down";
+  color?: "green" | "blue" | "purple" | "orange" | "red" | "amber";
+  description?: string; // أضف هذا السطر
 }
 
-export function StoreCard({ store, stats, onVisit, onEdit }: StoreCardProps) {
+export function StatsCard({
+  title,
+  value,
+  icon: Icon,
+  change,
+  trend,
+  color = "blue",
+  description, // أضف هذا السطر
+}: StatsCardProps) {
+  const colorClasses = {
+    green: "text-green-600 bg-green-100",
+    blue: "text-blue-600 bg-blue-100",
+    purple: "text-purple-600 bg-purple-100",
+    orange: "text-orange-600 bg-orange-100",
+    red: "text-red-600 bg-red-100",
+    amber: "text-amber-600 bg-amber-100",
+  };
+
+  const trendIcon =
+    trend === "up" ? (
+      <svg
+        className="w-4 h-4 text-green-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M5 10l7-7m0 0l7 7m-7-7v18"
+        />
+      </svg>
+    ) : trend === "down" ? (
+      <svg
+        className="w-4 h-4 text-red-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M19 14l-7 7m0 0l-7-7m7 7V3"
+        />
+      </svg>
+    ) : null;
+
   return (
-    <Card className="hover:shadow-lg transition-shadow">
-      <CardHeader>
+    <Card>
+      <CardContent className="p-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 flex-row-reverse">
-            <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-green-500 to-blue-500 flex items-center justify-center">
-              <StoreIcon className="h-6 w-6 text-white" />
-            </div>
-            <div className="text-right">
-              <CardTitle>{store.name}</CardTitle>
-              <CardDescription>{store.subdomain}.store.com</CardDescription>
-            </div>
-          </div>
-          <Badge variant={store.status === "active" ? "default" : "secondary"}>
-            {store.status === "active" ? "نشط" : "غير نشط"}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            {stats && (
-              <>
-                <div className="flex items-center gap-2">
-                  <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">الطلبات: {stats.totalOrders}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">
-                    المنتجات: {stats.totalProducts}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">
-                    العملاء: {stats.activeCustomers}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">
-                    الإيرادات: {stats.totalRevenue.toLocaleString()} ر.ي
-                  </span>
-                </div>
-              </>
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-muted-foreground">{title}</p>
+            <h3 className="text-2xl font-bold">{value}</h3>
+            {/* إضافة الوصف هنا */}
+            {description && (
+              <p className="text-xs text-muted-foreground">{description}</p>
             )}
           </div>
-
-          <div className="flex gap-2 justify-end">
-            <Button variant="outline" size="sm" onClick={onEdit}>
-              <Edit className="h-4 w-4 ml-2" />
-              تعديل
-            </Button>
-            <Button size="sm" onClick={onVisit}>
-              <ExternalLink className="h-4 w-4 ml-2" />
-              زيارة المتجر
-            </Button>
+          <div
+            className={`h-12 w-12 rounded-full ${colorClasses[color]} flex items-center justify-center`}
+          >
+            <Icon className="h-6 w-6" />
           </div>
         </div>
+        {change && trend && (
+          <div className="flex items-center mt-4">
+            {trendIcon}
+            <span
+              className={`ml-2 text-sm font-medium ${
+                trend === "up" ? "text-green-600" : "text-red-600"
+              }`}
+            >
+              {change}
+            </span>
+            <span className="ml-2 text-sm text-muted-foreground">
+              عن الشهر الماضي
+            </span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

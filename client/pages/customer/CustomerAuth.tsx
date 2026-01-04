@@ -19,7 +19,7 @@ import {
   registerCustomer,
   isCustomerLoggedIn,
 } from "@/lib/customer-auth";
-import { getCurrentStoreId } from "@/lib/firebase";
+import { getCurrentStoreId } from "@/lib/src/firebase/firebase";
 import { Loader2 } from "lucide-react";
 
 interface StoreInfo {

@@ -12,11 +12,8 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { signInUserEnhanced } from "@/lib/auth-enhanced";
-import { testFirebaseConnection } from "@/lib/firebase-diagnostics";
-import { signInUserDev } from "@/lib/auth-dev";
-import { showAvailableCredentials } from "@/lib/fallback-auth";
 import { redirectUserAfterLogin } from "@/lib/user-routing";
+import { authService } from "@/lib/src/services/auth/auth.service";
 import {
   Store,
   ShoppingBag,
@@ -68,11 +65,9 @@ export default function Login() {
       redirecting: "جاري التوجيه...",
       errorTitle: "خطأ في تسجيل الدخول",
       unexpectedError: "حدث خطأ غير متوقع",
-      // نص التحقق من البريد
       emailNotVerified: "البريد الإلكتروني غير مفعل",
       emailNotVerifiedDesc: "يجب تفعيل بريدك الإلكتروني أولاً قبل تسجيل الدخول",
       checkEmail: "يرجى فحص بريدك الإلكتروني وتفعيل الحساب",
-      // رسائل الأخطاء الجديدة
       emailNotFound: "البريد الإلكتروني غير مسجل في المنصة",
       wrongPassword: "كلمة المرور غير صحيحة",
       invalidEmail: "صيغة البريد الإلكتروني غير صحيحة",
@@ -103,11 +98,9 @@ export default function Login() {
       redirecting: "Redirecting...",
       errorTitle: "Sign In Error",
       unexpectedError: "An unexpected error occurred",
-      // Email verification text
       emailNotVerified: "Email not verified",
       emailNotVerifiedDesc: "You must verify your email before signing in",
       checkEmail: "Please check your email and verify your account",
-      // New error messages
       emailNotFound: "Email is not registered",
       wrongPassword: "Incorrect password",
       invalidEmail: "Invalid email format",
@@ -150,46 +143,43 @@ export default function Login() {
     setLoading(true);
 
     try {
-      console.log("🚀 Starting login process...");
+      console.log("🚀 Starting login process with unified auth service...");
+      console.log("📧 Email:", formData.email);
 
-      // Show available credentials in development mode
-      if (process.env.NODE_ENV === "development") {
-        showAvailableCredentials();
-      }
+      // ✅ استخدام نظام المصادقة الموحد
+      const result = await authService.signIn(
+        formData.email,
+        formData.password,
+      );
 
-      // Check if Firebase is disabled (development mode)
-      const isFirebaseDisabled =
-        process.env.NODE_ENV === "development" ||
-        (typeof window !== "undefined" &&
-          (window as any).__FIREBASE_DISABLED__);
+      if (result.success && result.user) {
+        console.log("✅ Login successful with unified auth service");
 
-      let result;
-      let firebaseUser: any = null;
+        const firebaseUser = result.user.user;
+        const userData = result.userData;
 
-      if (isFirebaseDisabled) {
-        console.log("🔧 Using development auth");
-        try {
-          result = await signInUserDev(formData.email, formData.password);
+        // ✅ تسجيل معلومات المستخدم
+        console.log("👤 User authenticated:", {
+          uid: firebaseUser?.uid,
+          email: firebaseUser?.email,
+          userType: userData?.userType,
+          emailVerified: firebaseUser?.emailVerified,
+        });
 
-          // استخراج المستخدم
-          firebaseUser = (result as any)?.user || result;
-
-          // ========== ⚠️ الكود المعلق للتحقق من البريد في وضع التطوير ==========
-          /*
-        if (firebaseUser?.emailVerified === false) {
-          toast({
-            title: currentText.emailNotVerified,
-            description: currentText.emailNotVerifiedDesc,
-            variant: "destructive",
-          });
-          setLoading(false);
-          return; // لا يسمح بالدخول
-        }
-        */
-          // ========== ⚠️ نهاية الكود المعلق ==========
-
-          // ✅ فقط إظهار رسالة تحذيرية بدون منع الدخول
-          if (firebaseUser?.emailVerified === false) {
+        // ✅ التحقق من تفعيل البريد الإلكتروني (للإنتاج فقط)
+        if (process.env.NODE_ENV === "production") {
+          if (firebaseUser && !firebaseUser.emailVerified) {
+            toast({
+              title: "⚠️ " + currentText.emailNotVerified,
+              description: currentText.emailNotVerifiedDesc,
+              variant: "destructive",
+            });
+            setLoading(false);
+            return;
+          }
+        } else {
+          // ✅ في وضع التطوير، نسمح بالدخول مع تحذير
+          if (firebaseUser && !firebaseUser.emailVerified) {
             console.log(
               "⚠️ Email not verified (development mode) - Login allowed for testing",
             );
@@ -199,125 +189,84 @@ export default function Login() {
               variant: "default",
             });
           }
-        } catch (devError: any) {
-          result = {
-            success: false,
-            error: devError.message || "Invalid credentials (development mode)",
-          };
         }
-      } else {
-        try {
-          const connectionTest = await testFirebaseConnection();
-          console.log("🔍 Firebase connection test:", connectionTest);
-          result = await signInUserEnhanced(formData.email, formData.password);
 
-          if (result.success && result.user) {
-            firebaseUser = result.user.user;
-
-            // ========== ⚠️ الكود المعلق للتحقق من البريد في وضع الإنتاج ==========
-            /*
-          if (firebaseUser?.emailVerified === false) {
-            toast({
-              title: currentText.emailNotVerified,
-              description: currentText.emailNotVerifiedDesc,
-              variant: "destructive",
-            });
-            setLoading(false);
-            return; // لا يسمح بالدخول
-          }
-          */
-            // ========== ⚠️ نهاية الكود المعلق ==========
-
-            // ✅ فقط إظهار رسالة تحذيرية بدون منع الدخول
-            if (firebaseUser?.emailVerified === false) {
-              console.log(
-                "⚠️ Email not verified (production mode) - Login allowed for testing",
-              );
-              toast({
-                title: "⚠️ " + currentText.emailNotVerified,
-                description: "يسمح بالدخول للاختبار - البريد غير مفعل",
-                variant: "default",
-              });
-            }
-          }
-        } catch (error: any) {
-          result = {
-            success: false,
-            error: error.message || currentText.unexpectedError,
-          };
-        }
-      }
-
-      if (result.success && result.user) {
-        console.log("✅ Login successful");
-
-        // ✅ عرض رسالة مختلفة إذا كان البريد غير مفعل
-        if (firebaseUser?.emailVerified === false) {
-          toast({
-            title: "✅ تم تسجيل الدخول (بريد غير مفعل)",
-            description:
-              "تم السماح بالدخول للاختبار - يرجى تفعيل البريد لاحقاً",
-          });
-        } else {
+        // ✅ رسالة النجاح
+        if (firebaseUser?.emailVerified) {
           toast({
             title: currentText.success,
             description: currentText.redirecting,
           });
         }
 
-        // عند التوجيه، استخدم firebaseUser مباشرة:
-
+        // ✅ التوجيه إلى الصفحة المناسبة
         setTimeout(async () => {
-          // استخراج userId من firebaseUser
-          const userIdToUse = firebaseUser?.uid;
+          const userId = firebaseUser?.uid;
 
-          if (userIdToUse) {
-            console.log("🔀 Redirecting with userId:", userIdToUse);
-            await redirectUserAfterLogin(navigate, location, userIdToUse);
+          if (userId) {
+            console.log("🔀 Redirecting with userId:", userId);
+            await redirectUserAfterLogin(navigate, location, userId);
           } else {
-            console.error("❌ No userId found");
+            console.error("❌ No userId found after login");
 
-            // محاولة الحصول على userId من Firebase Auth مباشرة
-            try {
-              const { auth } = await import("@/lib/firebase");
-              const currentUser = auth.currentUser;
-              if (currentUser?.uid) {
-                console.log(
-                  "✅ Found userId from auth.currentUser:",
-                  currentUser.uid,
-                );
-                await redirectUserAfterLogin(
-                  navigate,
-                  location,
-                  currentUser.uid,
-                );
-              } else {
-                console.log(
-                  "⚠️ No current user, redirecting to default dashboard",
-                );
-                navigate("/merchant/dashboard");
-              }
-            } catch (importError) {
-              console.error("❌ Error importing auth:", importError);
-              navigate("/merchant/dashboard");
+            // ✅ محاولة الحصول على المستخدم الحالي من authService
+            const currentUser = authService.getCurrentUser();
+            if (currentUser?.uid) {
+              console.log("✅ Found userId from authService:", currentUser.uid);
+              await redirectUserAfterLogin(navigate, location, currentUser.uid);
+            } else {
+              console.log(
+                "⚠️ No current user, redirecting to default dashboard",
+              );
+              navigate("/customer/dashboard");
             }
           }
         }, 500);
       } else {
+        // ✅ معالجة أخطاء المصادقة
         console.error("❌ Login failed:", result.error);
+
+        let errorMessage = result.error || currentText.unexpectedError;
+
+        // ✅ تحسين رسائل الأخطاء
+        if (result.error?.includes("user-not-found")) {
+          errorMessage = currentText.emailNotFound;
+        } else if (result.error?.includes("wrong-password")) {
+          errorMessage = currentText.wrongPassword;
+        } else if (result.error?.includes("invalid-email")) {
+          errorMessage = currentText.invalidEmail;
+        } else if (result.error?.includes("too-many-requests")) {
+          errorMessage = currentText.tooManyAttempts;
+        } else if (result.error?.includes("user-disabled")) {
+          errorMessage = currentText.accountDisabled;
+        } else if (result.error?.includes("network-request-failed")) {
+          errorMessage = currentText.networkError;
+        }
 
         toast({
           title: currentText.errorTitle,
-          description: result.error || currentText.unexpectedError,
+          description: errorMessage,
           variant: "destructive",
         });
       }
     } catch (error: any) {
       console.error("❌ Unexpected login error:", error);
 
+      let errorMessage = error.message || currentText.unexpectedError;
+
+      // ✅ معالجة أخطاء الشبكة
+      if (
+        error.message?.includes("network") ||
+        error.message?.includes("timeout")
+      ) {
+        errorMessage = currentText.networkError;
+      } else if (error.message?.includes("Failed to fetch")) {
+        errorMessage = currentText.serverError;
+      }
+
       toast({
         title: currentText.errorTitle,
-        description: error.message || currentText.unexpectedError,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -330,6 +279,38 @@ export default function Login() {
       ...prev,
       [e.target.name]: e.target.value,
     }));
+  };
+
+  // ✅ وظيفة لعرض بيانات الدخول السريع في التطوير
+  const showQuickLoginCredentials = () => {
+    if (process.env.NODE_ENV !== "development") return null;
+
+    return (
+      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <h4 className="text-sm font-medium text-blue-800 mb-2">
+          🔧 Development Mode - Quick Login
+        </h4>
+        <p className="text-xs text-blue-700 mb-2">
+          Available credentials (from app-initialization.ts):
+        </p>
+        <div className="space-y-1 text-xs text-blue-600">
+          <div>
+            <strong>Admin:</strong> admin@ecommerce-platform.com /
+            AdminPlatform2024!
+          </div>
+          <div>
+            <strong>Test Merchant:</strong> merchant@test.com / merchant123
+          </div>
+          <div>
+            <strong>Test Customer:</strong> customer@test.com / customer123
+          </div>
+        </div>
+        <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-700">
+          <AlertCircle className="h-3 w-3 inline mr-1" />
+          <strong>Note:</strong> Using unified auth service with Firebase
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -398,6 +379,11 @@ export default function Login() {
                 ))}
               </TabsList>
 
+              {/* ✅ عرض بيانات الدخول السريع مرة واحدة فقط */}
+              {process.env.NODE_ENV === "development" &&
+                activeTab === "merchant" &&
+                showQuickLoginCredentials()}
+
               {userTypes.map((type) => (
                 <TabsContent key={type.id} value={type.id}>
                   <div className="text-center mb-6">
@@ -409,35 +395,6 @@ export default function Login() {
                     <h3 className="font-semibold text-lg">{type.label}</h3>
                     <p className="text-gray-600 text-sm">{type.description}</p>
                   </div>
-
-                  {process.env.NODE_ENV === "development" && (
-                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <h4 className="text-sm font-medium text-blue-800 mb-2">
-                        🔧 Development Mode
-                      </h4>
-                      <p className="text-xs text-blue-700 mb-2">
-                        Quick login credentials:
-                      </p>
-                      <div className="space-y-1 text-xs text-blue-600">
-                        <div>
-                          <strong>Admin:</strong> admin@ecommerce-platform.com /
-                          AdminPlatform2024!
-                        </div>
-                        <div>
-                          <strong>Merchant:</strong> merchant@test.com /
-                          merchant123
-                        </div>
-                        <div>
-                          <strong>Customer:</strong> customer@test.com /
-                          customer123
-                        </div>
-                      </div>
-                      <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-700">
-                        <AlertCircle className="h-3 w-3 inline mr-1" />
-                        <strong>Note:</strong> Email verification is required
-                      </div>
-                    </div>
-                  )}
 
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
@@ -458,6 +415,7 @@ export default function Login() {
                           className="pl-10 rtl:pr-10 rtl:pl-3"
                           required
                           disabled={loading}
+                          autoComplete="email"
                         />
                       </div>
                     </div>
@@ -480,6 +438,7 @@ export default function Login() {
                           className="pl-10 pr-10 rtl:pr-10 rtl:pl-10"
                           required
                           disabled={loading}
+                          autoComplete="current-password"
                         />
                         <Button
                           type="button"
@@ -506,6 +465,11 @@ export default function Login() {
                       <ul className="text-xs text-gray-600 space-y-1 list-disc list-inside">
                         <li>
                           {isArabic
+                            ? "استخدم نظام المصادقة الموحد للمنصة"
+                            : "Using the platform's unified authentication system"}
+                        </li>
+                        <li>
+                          {isArabic
                             ? "يجب تفعيل البريد الإلكتروني قبل تسجيل الدخول"
                             : "Email must be verified before logging in"}
                         </li>
@@ -513,11 +477,6 @@ export default function Login() {
                           {isArabic
                             ? "إذا نسيت كلمة المرور، اضغط على 'نسيت كلمة المرور؟'"
                             : "If you forgot your password, click 'Forgot password?'"}
-                        </li>
-                        <li>
-                          {isArabic
-                            ? "تأكد من صحة البريد الإلكتروني وكلمة المرور"
-                            : "Make sure your email and password are correct"}
                         </li>
                       </ul>
                     </div>

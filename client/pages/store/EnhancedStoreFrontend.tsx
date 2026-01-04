@@ -21,7 +21,7 @@ import {
   getStoreBySubdomain,
   getProductsByStoreId,
   getStoreCategoriesByStoreId,
-} from "../../lib/firestore";
+} from "../../lib/src";
 import {
   generateStoreCSS,
   StoreCustomization,

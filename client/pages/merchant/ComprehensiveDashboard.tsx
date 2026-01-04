@@ -53,27 +53,7 @@
 // } from "@/components/ui/dialog";
 // import { useToast } from "@/hooks/use-toast";
 // import { useAuth } from "@/contexts/AuthContext";
-// import {
-//   storeService,
-//   productService,
-//   orderService,
-//   categoryService,
-//   customerService,
-//   updateStoreContactWithGovernorate,
-//   updateStoreBusinessInfo,
-//   updateStoreYemeniPaymentSettings,
-//   updateStoreShippingConfig,
-//   updateOrderShippingAddressWithGovernorate,
-//   updateCustomerShippingAddress,
-//   type Store,
-//   type Product,
-//   type Order,
-//   type Category,
-//   type Customer,
-//   type ShippingZone,
-//   type ShippingMethod,
-//   type ShippingAddress,
-// } from "@/lib/firestore";
+
 // import {
 //   Store as StoreIcon,
 //   Package,
@@ -168,6 +148,16 @@
 //   Award as AwardIcon,
 //   TestTube as TestTubeIcon,
 // } from "lucide-react";
+// import { Store } from "@/lib/src/types/store.types";
+// import { Customer, customerService } from "@/lib/src/services/customer";
+// import { Product } from "@/lib/src/types/product.types";
+// import { Order } from "@/lib/src/types/order.types";
+// import { Category } from "@/lib/src/types/category.types";
+// import { ShippingAddress, ShippingMethod, ShippingZone } from "@/lib/src/types/shared.types";
+// import { storeService } from "@/lib/src/services/store/store.service";
+// import { productService } from "@/lib/src/services/product/product.service";
+// import { orderService } from "@/lib/src/services/order/order.service";
+// import { categoryService } from "@/lib/src/services/category/category.service";
 
 // // تعريف واجهة ExtendedCustomer
 // interface ExtendedCustomer extends Customer {

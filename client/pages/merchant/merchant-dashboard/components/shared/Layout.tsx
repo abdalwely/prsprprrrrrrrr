@@ -32,8 +32,8 @@ import {
   ChevronDown,
   MoreHorizontal,
 } from "lucide-react";
-import { ExtendedStore } from "../../types";
 import { cn } from "@/lib/utils";
+import { ExtendedStore } from "@/lib/src";
 
 interface DashboardHeaderProps {
   store: ExtendedStore | null;
@@ -81,15 +81,11 @@ const subTabsConfig: Record<
     { id: "contact-info", label: "معلومات الاتصال" },
     { id: "design", label: "تصميم المتجر" },
     { id: "themes", label: "متجر الثيمات" },
-    { id: "domain", label: "دومين المتجر" },
-    { id: "pages", label: "الصفحات التعريفية" },
-    { id: "banner", label: "الشريط الترويجي" },
-    { id: "links", label: "روابط مخصصة" },
-    { id: "languages", label: "اللغات" },
-    { id: "currencies", label: "العملات" },
-    { id: "maintenance", label: "وضع الصيانة" },
-    { id: "advanced", label: "الإعدادات المتقدمة" },
+    { id: "shipping", label: "إعدادات الشحن" },
+    { id: "payment", label: "إعدادات الدفع" },
+    { id: "taxes", label: "إعدادات الضرائب" },
   ],
+
   analytics: [
     { id: "store-performance", label: "أداء المتجر" },
     { id: "sales", label: "المبيعات" },
@@ -142,12 +138,9 @@ export function DashboardHeader({
   // تحديد التبويبات المرئية والمخفية بناءً على عدد التبويبات
   const shouldShowMore = currentSubTabs.length > 5;
   const visibleSubTabs = shouldShowMore
-    ? currentSubTabs.slice(0, 5) // أول 5 تبويبات فقط
-    : currentSubTabs; // جميع التبويبات
-
-  const hiddenSubTabs = shouldShowMore
-    ? currentSubTabs.slice(5) // باقي التبويبات
-    : [];
+    ? currentSubTabs.slice(0, 5)
+    : currentSubTabs;
+  const hiddenSubTabs = shouldShowMore ? currentSubTabs.slice(5) : [];
 
   const handleTabClick = (tabId: string) => {
     setActiveTab(tabId);
@@ -221,7 +214,7 @@ export function DashboardHeader({
       {/* Main Header - Larger Height */}
       <header
         dir="rtl"
-        className="fixed top-0 inset-x-0 z-50 h-16 bg-[#0E4B50] text-white border-0"
+        className="fixed top-0 inset-x-0 z-50 h-16 bg-gradient-to-r from-primary to-brand text-white border-0"
       >
         <div className="flex h-full items-center justify-between px-4 lg:px-6">
           {/* Right Side - Store Logo + Navigation */}
@@ -278,7 +271,7 @@ export function DashboardHeader({
                 <button className="relative flex items-center justify-center h-10 w-10 rounded-full hover:bg-white/10">
                   <Bell className="h-4.5 w-4.5" />
                   {notifications.length > 0 && (
-                    <span className="absolute top-1 left-1 h-4 w-4 rounded-full bg-red-500 text-[10px] text-white flex items-center justify-center">
+                    <span className="absolute top-1 left-1 h-4 w-4 rounded-full bg-destructive text-[10px] text-white flex items-center justify-center">
                       {notifications.length}
                     </span>
                   )}
@@ -287,9 +280,9 @@ export function DashboardHeader({
 
               <DropdownMenuContent
                 align="end"
-                className="w-64 bg-white shadow-lg p-2"
+                className="w-64 bg-background shadow-lg p-2"
               >
-                <p className="text-sm font-medium text-gray-700 px-2 py-1 border-b">
+                <p className="text-sm font-medium text-foreground px-2 py-1 border-b">
                   الإشعارات
                 </p>
 
@@ -297,16 +290,16 @@ export function DashboardHeader({
                   notifications.map((n) => (
                     <DropdownMenuItem
                       key={n.id}
-                      className="text-sm text-gray-700 hover:bg-gray-50 flex flex-col items-start px-2 py-1"
+                      className="text-sm text-foreground hover:bg-accent flex flex-col items-start px-2 py-1"
                     >
                       <span className="font-semibold">{n.title}</span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-muted-foreground">
                         {n.description}
                       </span>
                     </DropdownMenuItem>
                   ))
                 ) : (
-                  <p className="text-xs text-gray-400 px-2 py-2">
+                  <p className="text-xs text-muted-foreground px-2 py-2">
                     لا توجد إشعارات حالياً
                   </p>
                 )}
@@ -324,25 +317,27 @@ export function DashboardHeader({
                   </Avatar>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48 bg-white">
+              <DropdownMenuContent align="start" className="w-48 bg-background">
                 <div className="p-3 text-right">
-                  <p className="text-sm font-medium text-gray-800">
+                  <p className="text-sm font-medium text-foreground">
                     {userData?.firstName} {userData?.lastName}
                   </p>
-                  <p className="text-xs text-gray-500">{userData?.email}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {userData?.email}
+                  </p>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="flex-row-reverse justify-end text-sm text-gray-700 hover:bg-gray-50">
+                <DropdownMenuItem className="flex-row-reverse justify-end text-sm text-foreground hover:bg-accent">
                   <User className="h-4 w-4 ml-2" />
                   الملف الشخصي
                 </DropdownMenuItem>
-                <DropdownMenuItem className="flex-row-reverse justify-end text-sm text-gray-700 hover:bg-gray-50">
+                <DropdownMenuItem className="flex-row-reverse justify-end text-sm text-foreground hover:bg-accent">
                   <Settings className="h-4 w-4 ml-2" />
                   الإعدادات
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  className="flex-row-reverse justify-end text-sm text-red-600 hover:bg-red-50"
+                  className="flex-row-reverse justify-end text-sm text-destructive hover:bg-destructive/10"
                   onClick={() => navigate("/login")}
                 >
                   <LogOut className="h-4 w-4 ml-2" />
@@ -357,24 +352,24 @@ export function DashboardHeader({
         {searchOpen && (
           <div
             dir="rtl"
-            className="absolute top-full inset-x-0 bg-white border-b z-50"
+            className="absolute top-full inset-x-0 bg-background border-b z-50"
           >
             <div className="px-4 lg:px-6 py-3">
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
                   <Input
                     placeholder="ابحث في المنتجات، الطلبات، العملاء..."
-                    className="pr-10 pl-4 py-1.5 text-sm border-0 focus-visible:ring-0 text-right text-gray-700"
+                    className="pr-10 pl-4 py-1.5 text-sm border-0 focus-visible:ring-0 text-right text-foreground"
                     value={tempSearchTerm}
                     onChange={(e) => setTempSearchTerm(e.target.value)}
                     onKeyDown={handleSearchKeyPress}
                     autoFocus
                   />
-                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 </div>
                 <Button
                   onClick={handleSearchSubmit}
-                  className="bg-[#0E4B50] hover:bg-[#0a3c40] text-sm px-4 h-9"
+                  className="btn-gradient text-sm px-4 h-9"
                 >
                   بحث
                 </Button>
@@ -389,7 +384,7 @@ export function DashboardHeader({
 
       {/* Sub Tabs */}
       {currentSubTabs.length > 0 && (
-        <div dir="rtl" className="sticky top-16 z-40 bg-white border-b">
+        <div dir="rtl" className="sticky top-16 z-40 bg-background border-b">
           <div className="flex items-center justify-between px-4 lg:px-6 h-12">
             {/* Right Side - Sub Tabs with More Button */}
             <div className="flex gap-6 text-sm overflow-hidden">
@@ -401,8 +396,8 @@ export function DashboardHeader({
                   className={cn(
                     "pb-2 border-b-2 transition-colors whitespace-nowrap",
                     activeSubTab === tab.id
-                      ? "border-[#0E4B50] text-[#0E4B50] font-medium"
-                      : "border-transparent text-gray-500 hover:text-gray-700",
+                      ? "border-primary text-primary font-medium"
+                      : "border-transparent text-muted-foreground hover:text-foreground",
                   )}
                 >
                   {tab.label}
@@ -416,7 +411,7 @@ export function DashboardHeader({
                     <button
                       className={cn(
                         "pb-2 border-b-2 transition-colors flex items-center gap-1 whitespace-nowrap",
-                        "border-transparent text-gray-500 hover:text-gray-700",
+                        "border-transparent text-muted-foreground hover:text-foreground",
                       )}
                     >
                       <MoreHorizontal className="h-4 w-4" />
@@ -426,7 +421,7 @@ export function DashboardHeader({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     align="start"
-                    className="bg-white shadow-lg p-2 min-w-[150px]"
+                    className="bg-background shadow-lg p-2 min-w-[150px]"
                   >
                     {hiddenSubTabs.map((tab) => (
                       <DropdownMenuItem
@@ -435,8 +430,8 @@ export function DashboardHeader({
                         className={cn(
                           "flex-row-reverse justify-end text-sm px-2 py-1.5",
                           activeSubTab === tab.id
-                            ? "bg-gray-100 text-[#0E4B50] font-medium"
-                            : "text-gray-700 hover:bg-gray-50",
+                            ? "bg-accent text-primary font-medium"
+                            : "text-foreground hover:bg-accent",
                         )}
                       >
                         {tab.label}
@@ -455,7 +450,7 @@ export function DashboardHeader({
                 activeTab === "orders") && (
                 <Button
                   size="sm"
-                  className="flex items-center gap-1.5 h-8 px-4 text-sm bg-green-600 hover:bg-green-700 transition-colors"
+                  className="flex items-center gap-1.5 h-8 px-4 text-sm bg-success hover:bg-success/90 text-white transition-colors"
                   onClick={getAddButtonAction()}
                 >
                   <Plus className="h-4 w-4" />
@@ -468,7 +463,7 @@ export function DashboardHeader({
               {/* Help Button */}
               <button
                 onClick={() => navigate("/help")}
-                className="flex items-center gap-2 h-8 px-3 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors"
+                className="flex items-center gap-2 h-8 px-3 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded transition-colors"
               >
                 <HelpCircle className="h-4 w-4" />
                 <span>مساعدة</span>
@@ -482,7 +477,7 @@ export function DashboardHeader({
       {mobileMenuOpen && (
         <div
           dir="rtl"
-          className="lg:hidden fixed inset-x-0 top-16 z-50 bg-[#0E4B50] border-t"
+          className="lg:hidden fixed inset-x-0 top-16 z-50 bg-gradient-to-r from-primary to-brand border-t"
         >
           <div className="px-4 py-5">
             {/* Mobile Navigation */}
@@ -493,7 +488,7 @@ export function DashboardHeader({
                   className={cn(
                     "h-12 flex flex-col items-center justify-center gap-1 rounded",
                     activeTab === item.id
-                      ? "bg-white text-[#0E4B50] font-medium"
+                      ? "bg-white text-primary font-medium"
                       : "bg-white/10 text-white/90 hover:bg-white/20",
                   )}
                   onClick={() => handleTabClick(item.id)}
@@ -515,7 +510,7 @@ export function DashboardHeader({
                       className={cn(
                         "h-8 px-3 text-xs rounded",
                         activeSubTab === subTab.id
-                          ? "bg-white text-[#0E4B50] font-medium border border-white"
+                          ? "bg-white text-primary font-medium border border-white"
                           : "bg-white/10 text-white/90 hover:bg-white/20 border border-white/20",
                       )}
                       onClick={() => {
@@ -536,12 +531,12 @@ export function DashboardHeader({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
                         align="start"
-                        className="w-40 bg-white"
+                        className="w-40 bg-background"
                       >
                         {currentSubTabs.slice(3).map((subTab) => (
                           <DropdownMenuItem
                             key={subTab.id}
-                            className="flex-row-reverse justify-end text-xs text-gray-700 hover:bg-gray-50"
+                            className="flex-row-reverse justify-end text-xs text-foreground hover:bg-accent"
                             onClick={() => {
                               handleSubTabClick(subTab.id);
                               setMobileMenuOpen(false);
@@ -574,7 +569,7 @@ export function DashboardHeader({
                   activeTab === "customers" ||
                   activeTab === "orders") && (
                   <button
-                    className="py-3 rounded bg-green-600 hover:bg-green-700 text-white text-sm flex items-center justify-center gap-1.5"
+                    className="py-3 rounded bg-success hover:bg-success/90 text-white text-sm flex items-center justify-center gap-1.5"
                     onClick={getAddButtonAction()}
                   >
                     <Plus className="h-4 w-4" />

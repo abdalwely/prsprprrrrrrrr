@@ -33,13 +33,12 @@ import {
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
-import { useStore } from "@/contexts/StoreContext";
+import { useAuth } from "@/lib/contexts/AuthContext";
+import { useStore } from "@/lib/contexts/StoreContext";
 import {
   productService,
   createCategoryWithValidation,
   getStoreCategoriesByStoreId,
-  ProductStatus,
   ComplianceDecision,
   DEFAULT_PRODUCT_TYPES,
   complianceSystem,
@@ -48,10 +47,9 @@ import {
   ProductKindSelectionResult,
   FieldVisibility,
   KindBasedValidation,
-  DetectionMethod,
-  ComplianceStatus,
-} from "@/lib/firestore";
-import { ExtendedStore } from "@/pages/merchant/merchant-dashboard/types";
+  ProductStatus,
+} from "@/lib/src";
+import { ExtendedStore } from "@/lib/src";
 import {
   Package,
   Upload,
@@ -76,7 +74,6 @@ import {
   AlertTriangle,
   Loader2,
   ChevronDown,
-  Check,
   Clock,
   Shield,
   Search,
@@ -85,8 +82,6 @@ import {
   Store,
   Rocket,
   XCircle,
-  Layers,
-  FileCode,
 } from "lucide-react";
 
 // 🔥 تعريف الأنواع المطلوبة

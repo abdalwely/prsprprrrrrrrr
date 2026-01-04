@@ -1,4 +1,4 @@
-// AdminStoreApprovals.tsx - مكون إدارة موافقات المتاجر المحدث
+// AdminStoreApprovals.tsx - مكون إدارة موافقات المتاجر المحدث والمصلح
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { adminService, StoreApplication } from "@/lib/adminService";
+import { adminService } from "@/lib/src/services/admin/admin.service";
 import {
   CheckCircle,
   XCircle,
@@ -45,12 +45,33 @@ import {
   Search,
   Filter,
   Palette,
-  LayoutTemplate, // ⭐ تغيير من Template إلى LayoutTemplate
+  LayoutTemplate,
   Globe,
   Check,
   MessageSquare,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { StoreApplication } from "@/lib/src/types/store.types";
+
+// دالة مساعدة لتحويل أي قيمة إلى Date بأمان
+const safeToDate = (value: any): Date => {
+  if (!value) return new Date();
+
+  if (typeof value === "string") {
+    const date = new Date(value);
+    return isNaN(date.getTime()) ? new Date() : date;
+  }
+
+  if (value.toDate && typeof value.toDate === "function") {
+    return value.toDate();
+  }
+
+  if (value instanceof Date) {
+    return value;
+  }
+
+  return new Date();
+};
 
 export default function AdminStoreApprovals() {
   const [applications, setApplications] = useState<StoreApplication[]>([]);
@@ -101,17 +122,17 @@ export default function AdminStoreApprovals() {
     if (searchTerm) {
       filtered = filtered.filter(
         (app) =>
-          app.storeConfig.storeName
-            .toLowerCase()
+          app.storeConfig?.storeName
+            ?.toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
-          app.merchantData.firstName
-            .toLowerCase()
+          app.merchantData?.firstName
+            ?.toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
-          app.merchantData.lastName
-            .toLowerCase()
+          app.merchantData?.lastName
+            ?.toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
-          app.merchantData.email
-            .toLowerCase()
+          app.merchantData?.email
+            ?.toLowerCase()
             .includes(searchTerm.toLowerCase()),
       );
     }
@@ -130,7 +151,7 @@ export default function AdminStoreApprovals() {
   ) => {
     setSelectedApp(application);
     setReviewAction(action);
-    setReviewNotes("");
+    setReviewNotes(application.notes || "");
     setReviewDialogOpen(true);
   };
 
@@ -145,11 +166,7 @@ export default function AdminStoreApprovals() {
     setProcessing(selectedApp.id);
     try {
       if (reviewAction === "approve") {
-        await adminService.approveStoreApplication(
-          selectedApp.id,
-          selectedApp,
-          reviewNotes,
-        );
+        await adminService.approveStoreApplication(selectedApp.id, reviewNotes);
         toast({
           title: "تمت الموافقة",
           description: "تم إنشاء المتجر بنجاح",
@@ -310,12 +327,13 @@ export default function AdminStoreApprovals() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg truncate">
-                      {application.storeConfig.storeName}
+                      {application.storeConfig?.storeName || "بدون اسم"}
                     </CardTitle>
                     {getStatusBadge(application.status)}
                   </div>
                   <CardDescription className="truncate">
-                    {application.storeConfig.storeDescription}
+                    {application.storeConfig?.customization?.storeDescription ||
+                      "لا يوجد وصف"}
                   </CardDescription>
                 </CardHeader>
 
@@ -325,51 +343,57 @@ export default function AdminStoreApprovals() {
                     <div className="flex items-center space-x-2 text-sm">
                       <User className="h-4 w-4 text-gray-500 flex-shrink-0" />
                       <span className="truncate">
-                        {application.merchantData.firstName}{" "}
-                        {application.merchantData.lastName}
+                        {application.merchantData?.firstName || ""}{" "}
+                        {application.merchantData?.lastName || ""}
                       </span>
                     </div>
 
                     <div className="flex items-center space-x-2 text-sm">
                       <Mail className="h-4 w-4 text-gray-500 flex-shrink-0" />
                       <span className="truncate">
-                        {application.merchantData.email}
+                        {application.merchantData?.email || "لا يوجد بريد"}
                       </span>
                     </div>
 
                     <div className="flex items-center space-x-2 text-sm">
                       <Phone className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                      <span>{application.merchantData.phone}</span>
+                      <span>
+                        {application.merchantData?.phone || "لا يوجد هاتف"}
+                      </span>
                     </div>
 
                     <div className="flex items-center space-x-2 text-sm">
                       <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                      <span>{application.merchantData.city}</span>
+                      <span>
+                        {application.merchantData?.city || "غير محدد"}
+                      </span>
                     </div>
                   </div>
 
                   {/* معلومات القالب */}
-                  {application.selectedTemplate && (
-                    <div className="border-t pt-3">
-                      <h4 className="font-medium mb-2 flex items-center">
-                        <LayoutTemplate className="h-4 w-4 ml-2" />{" "}
-                        {/* ⭐ تحديث هنا */}
-                        القالب المختار
-                      </h4>
-                      <div className="flex items-center space-x-2">
-                        <LayoutTemplate className="h-4 w-4 text-blue-500" />
-                        <span className="font-medium">
-                          {application.selectedTemplate.name.ar}
-                        </span>
-                        <Badge variant="outline" className="text-xs">
-                          {application.selectedTemplate.category}
-                        </Badge>
+                  {"selectedTemplate" in application &&
+                    application.selectedTemplate && (
+                      <div className="border-t pt-3">
+                        <h4 className="font-medium mb-2 flex items-center">
+                          <LayoutTemplate className="h-4 w-4 ml-2" />
+                          القالب المختار
+                        </h4>
+                        <div className="flex items-center space-x-2">
+                          <LayoutTemplate className="h-4 w-4 text-blue-500" />
+                          <span className="font-medium">
+                            {(application.selectedTemplate as any).name?.ar ||
+                              "قالب غير محدد"}
+                          </span>
+                          <Badge variant="outline" className="text-xs">
+                            {(application.selectedTemplate as any).category ||
+                              "عام"}
+                          </Badge>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
                   {/* الألوان المختارة */}
-                  {application.storeConfig.customization?.colors &&
+                  {application.storeConfig?.customization?.colors &&
                     Object.keys(application.storeConfig.customization.colors)
                       .length > 0 && (
                       <div className="border-t pt-3">
@@ -400,14 +424,14 @@ export default function AdminStoreApprovals() {
                     )}
 
                   {/* الملاحظات */}
-                  {application.reviewNotes && (
+                  {application.notes && (
                     <div className="border-t pt-3">
                       <h4 className="font-medium mb-2 flex items-center">
                         <MessageSquare className="h-4 w-4 ml-2" />
                         ملاحظات المراجعة
                       </h4>
                       <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
-                        {application.reviewNotes}
+                        {application.notes}
                       </p>
                     </div>
                   )}
@@ -464,7 +488,7 @@ export default function AdminStoreApprovals() {
                 <DialogHeader>
                   <DialogTitle className="flex items-center">
                     <Store className="h-5 w-5 ml-2" />
-                    {selectedApp.storeConfig.storeName}
+                    {selectedApp.storeConfig?.storeName || "متجر بدون اسم"}
                   </DialogTitle>
                   <DialogDescription>تفاصيل طلب إنشاء المتجر</DialogDescription>
                 </DialogHeader>
@@ -479,8 +503,8 @@ export default function AdminStoreApprovals() {
                           الاسم الكامل
                         </label>
                         <p className="font-medium">
-                          {selectedApp.merchantData.firstName}{" "}
-                          {selectedApp.merchantData.lastName}
+                          {selectedApp.merchantData?.firstName || ""}{" "}
+                          {selectedApp.merchantData?.lastName || ""}
                         </p>
                       </div>
                       <div>
@@ -488,19 +512,19 @@ export default function AdminStoreApprovals() {
                           البريد الإلكتروني
                         </label>
                         <p className="font-medium">
-                          {selectedApp.merchantData.email}
+                          {selectedApp.merchantData?.email || "لا يوجد بريد"}
                         </p>
                       </div>
                       <div>
                         <label className="text-sm text-gray-500">الهاتف</label>
                         <p className="font-medium">
-                          {selectedApp.merchantData.phone}
+                          {selectedApp.merchantData?.phone || "لا يوجد هاتف"}
                         </p>
                       </div>
                       <div>
                         <label className="text-sm text-gray-500">المدينة</label>
                         <p className="font-medium">
-                          {selectedApp.merchantData.city}
+                          {selectedApp.merchantData?.city || "غير محدد"}
                         </p>
                       </div>
                       <div>
@@ -508,7 +532,7 @@ export default function AdminStoreApprovals() {
                           نوع النشاط
                         </label>
                         <p className="font-medium capitalize">
-                          {selectedApp.merchantData.businessType}
+                          {selectedApp.merchantData?.businessType || "غير محدد"}
                         </p>
                       </div>
                       <div>
@@ -516,7 +540,7 @@ export default function AdminStoreApprovals() {
                           اسم المنشأة
                         </label>
                         <p className="font-medium">
-                          {selectedApp.merchantData.businessName}
+                          {selectedApp.merchantData?.businessName || "غير محدد"}
                         </p>
                       </div>
                     </div>
@@ -531,7 +555,7 @@ export default function AdminStoreApprovals() {
                           اسم المتجر
                         </label>
                         <p className="font-medium">
-                          {selectedApp.storeConfig.storeName}
+                          {selectedApp.storeConfig?.storeName || "بدون اسم"}
                         </p>
                       </div>
                       <div>
@@ -539,7 +563,8 @@ export default function AdminStoreApprovals() {
                           وصف المتجر
                         </label>
                         <p className="font-medium">
-                          {selectedApp.storeConfig.storeDescription}
+                          {selectedApp.storeConfig?.customization
+                            ?.storeDescription || "لا يوجد وصف"}
                         </p>
                       </div>
                       <div>
@@ -547,9 +572,9 @@ export default function AdminStoreApprovals() {
                           تاريخ التقديم
                         </label>
                         <p className="font-medium">
-                          {new Date(selectedApp.submittedAt).toLocaleDateString(
-                            "ar-SA",
-                          )}
+                          {safeToDate(
+                            selectedApp.submittedAt,
+                          ).toLocaleDateString("ar-SA")}
                         </p>
                       </div>
                       <div>
@@ -562,54 +587,67 @@ export default function AdminStoreApprovals() {
                   </div>
 
                   {/* معلومات القالب */}
-                  {selectedApp.selectedTemplate && (
-                    <div>
-                      <h3 className="font-semibold mb-3">معلومات القالب</h3>
-                      <Card>
-                        <CardContent className="pt-6">
-                          <div className="flex items-start space-x-4">
-                            <img
-                              src={selectedApp.selectedTemplate.thumbnail}
-                              alt={selectedApp.selectedTemplate.name.ar}
-                              className="w-24 h-24 object-cover rounded-lg"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.src =
-                                  "https://via.placeholder.com/100x100?text=Template";
-                              }}
-                            />
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-lg">
-                                {selectedApp.selectedTemplate.name.ar}
-                              </h4>
-                              <p className="text-gray-600 text-sm mt-1">
-                                {selectedApp.selectedTemplate.description.ar}
-                              </p>
-                              <div className="flex items-center space-x-2 mt-3">
-                                <Badge variant="outline">
-                                  {selectedApp.selectedTemplate.category}
-                                </Badge>
-                                <Badge variant="outline">
-                                  {selectedApp.selectedTemplate.industry}
-                                </Badge>
-                                <Badge
-                                  variant={
-                                    selectedApp.selectedTemplate.isPremium
-                                      ? "default"
-                                      : "outline"
-                                  }
-                                >
-                                  {selectedApp.selectedTemplate.isPremium
-                                    ? "متميز"
-                                    : "مجاني"}
-                                </Badge>
+                  {"selectedTemplate" in selectedApp &&
+                    selectedApp.selectedTemplate && (
+                      <div>
+                        <h3 className="font-semibold mb-3">معلومات القالب</h3>
+                        <Card>
+                          <CardContent className="pt-6">
+                            <div className="flex items-start space-x-4">
+                              <img
+                                src={
+                                  (selectedApp.selectedTemplate as any)
+                                    .thumbnail
+                                }
+                                alt={
+                                  (selectedApp.selectedTemplate as any).name
+                                    ?.ar || "قالب"
+                                }
+                                className="w-24 h-24 object-cover rounded-lg"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src =
+                                    "https://via.placeholder.com/100x100?text=Template";
+                                }}
+                              />
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-lg">
+                                  {(selectedApp.selectedTemplate as any).name
+                                    ?.ar || "قالب غير محدد"}
+                                </h4>
+                                <p className="text-gray-600 text-sm mt-1">
+                                  {(selectedApp.selectedTemplate as any)
+                                    .description?.ar || "لا يوجد وصف"}
+                                </p>
+                                <div className="flex items-center space-x-2 mt-3">
+                                  <Badge variant="outline">
+                                    {(selectedApp.selectedTemplate as any)
+                                      .category || "عام"}
+                                  </Badge>
+                                  <Badge variant="outline">
+                                    {(selectedApp.selectedTemplate as any)
+                                      .industry || "عام"}
+                                  </Badge>
+                                  <Badge
+                                    variant={
+                                      (selectedApp.selectedTemplate as any)
+                                        .isPremium
+                                        ? "default"
+                                        : "outline"
+                                    }
+                                  >
+                                    {(selectedApp.selectedTemplate as any)
+                                      .isPremium
+                                      ? "متميز"
+                                      : "مجاني"}
+                                  </Badge>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  )}
+                          </CardContent>
+                        </Card>
+                      </div>
+                    )}
                 </div>
 
                 <DialogFooter>
@@ -645,11 +683,11 @@ export default function AdminStoreApprovals() {
               <div className="space-y-4">
                 <div className="p-3 bg-gray-50 rounded-lg">
                   <p className="font-medium">
-                    {selectedApp.storeConfig.storeName}
+                    {selectedApp.storeConfig?.storeName || "متجر بدون اسم"}
                   </p>
                   <p className="text-sm text-gray-600">
-                    {selectedApp.merchantData.firstName}{" "}
-                    {selectedApp.merchantData.lastName}
+                    {selectedApp.merchantData?.firstName || ""}{" "}
+                    {selectedApp.merchantData?.lastName || ""}
                   </p>
                 </div>
 

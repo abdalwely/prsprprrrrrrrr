@@ -1,4 +1,3 @@
-import { db } from "./firebase";
 import {
   collection,
   doc,
@@ -10,7 +9,7 @@ import {
   limit,
   DocumentData,
 } from "firebase/firestore";
-import { Store } from "./firestore";
+import { db, Store } from "./src";
 
 export const storeService = {
   // جلب متجر بواسطة ID
@@ -242,7 +241,7 @@ export const storeService = {
       const totalCustomers = customersSnapshot.size;
 
       // جلب الطلبات والإيرادات
-      const { orderService } = await import("./firestore");
+      const { orderService } = await import("./src");
       const orders = await orderService.getByStore(storeId);
       const totalOrders = orders.length;
       const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);

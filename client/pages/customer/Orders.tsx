@@ -12,7 +12,7 @@ import {
   customerService,
   storeService,
   type Order,
-} from "@/lib/firestore";
+} from "@/lib/src";
 import { Package, ArrowLeft, CheckCircle } from "lucide-react";
 import ConfirmReceiptDialog from "@/components/ui/ConfirmReceiptDialog";
 
@@ -58,7 +58,7 @@ export default function Orders() {
           return;
         }
 
-        const found = await orderService.getByCustomer(customer.id);
+        const found = await orderService.getByCustomer(customer.uid);
         setOrders(found || []);
 
         // Load store names for display
@@ -126,7 +126,7 @@ export default function Orders() {
       });
 
       // Refresh orders list from server to be safe
-      const found = await orderService.getByCustomer(customer.id);
+      const found = await orderService.getByCustomer(customer.uid);
       setOrders(found || []);
 
       // Refresh store names mapping

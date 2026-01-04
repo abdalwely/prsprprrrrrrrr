@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { doc, onSnapshot, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { StoreApplication } from "@/lib/store-approval-system";
+import { getStoreApplications } from "@/lib/store-approval-system";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ import {
   FileText,
   Loader2,
 } from "lucide-react";
+import { StoreApplication } from "@/lib/src/types/store.types";
 
 export default function ApplicationStatus() {
   const location = useLocation();
@@ -43,9 +44,8 @@ export default function ApplicationStatus() {
           const data = docSnap.data() as StoreApplication;
           console.log("📊 بيانات الطلب المستلمة:", {
             status: data.status,
-            activatedStoreId: data.activatedStoreId,
-            hasStoreId: !!data.activatedStoreId,
-            storeName: data.storeConfig.customization.storeName,
+            activatedStoreId: data.convertedStoreId,
+            storeName: data.storeConfig.storeName,
           });
 
           setApplication({
@@ -54,24 +54,24 @@ export default function ApplicationStatus() {
           });
 
           // ⭐⭐ إذا تمت الموافقة ولديه storeId
-          if (data.status === "approved" && data.activatedStoreId) {
+          if (data.status === "approved" && data.convertedStoreId) {
             console.log("🎯 توجيه إلى لوحة التحكم:", {
-              storeId: data.activatedStoreId,
-              storeName: data.storeConfig.customization.storeName,
+              storeId: data.id,
+              storeName: data.storeConfig.storeName,
             });
 
             // تأكد من أن storeId صالح
             if (
-              data.activatedStoreId &&
-              data.activatedStoreId !== "undefined"
+              data.convertedStoreId &&
+              data.convertedStoreId !== "undefined"
             ) {
               setTimeout(() => {
-                navigate(`/merchant/dashboard/${data.activatedStoreId}`);
+                navigate(`/merchant/dashboard/${data.convertedStoreId}`);
               }, 3000);
             } else {
               console.error(
                 "❌ activatedStoreId غير صالح:",
-                data.activatedStoreId,
+                data.convertedStoreId,
               );
             }
           }
@@ -194,7 +194,7 @@ export default function ApplicationStatus() {
                   </div>
                   <div className="flex justify-between">
                     <dt className="text-gray-600">اسم المتجر:</dt>
-                    <dd>{application.storeConfig.customization.storeName}</dd>
+                    <dd>{application.storeConfig.storeName}</dd>
                   </div>
                   <div className="flex justify-between">
                     <dt className="text-gray-600">النطاق:</dt>
@@ -205,7 +205,7 @@ export default function ApplicationStatus() {
                   </div>
                   <div className="flex justify-between">
                     <dt className="text-gray-600">تاريخ التقديم:</dt>
-                    <dd>{formatDate(application.submittedAt)}</dd>
+                    <dd>{formatDate(application.convertedAt as Timestamp)}</dd>
                   </div>
                 </dl>
               </div>
@@ -228,11 +228,13 @@ export default function ApplicationStatus() {
                   {application.reviewedAt && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">آخر تحديث:</span>
-                      <span>{formatDate(application.reviewedAt)}</span>
+                      <span>
+                        {formatDate(application.reviewedAt as Timestamp)}
+                      </span>
                     </div>
                   )}
 
-                  {application.activatedStoreId && (
+                  {application.convertedStoreId && (
                     <div className="mt-4 p-3 bg-green-50 rounded-lg">
                       <p className="text-green-700 font-medium">
                         ✓ تم إنشاء متجرك بنجاح!
@@ -290,7 +292,7 @@ export default function ApplicationStatus() {
                         className="mt-2"
                         onClick={() =>
                           navigate(
-                            `/merchant/dashboard/${application.activatedStoreId}`,
+                            `/merchant/dashboard/${application.convertedStoreId}`,
                           )
                         }
                       >
